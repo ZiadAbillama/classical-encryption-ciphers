@@ -79,11 +79,28 @@ function encrypt(text, key) {
     // output first with original case
     out.push(upper1 ? ra.toUpperCase() : ra);
 
-    // copy any non-letters between i and j
-    for (let k = i + 1; k < Math.min(j, n); k++) out.push(text[k]);
+    // copy any non-letters BETWEEN i and j ONLY if we will consume j (i.e., secondExists true)
+    if (secondExists) {
+      for (let k = i + 1; k < Math.min(j, n); k++) out.push(text[k]);
+    }
 
-    // output second: if it’s an inserted 'x', keep lowercase; else preserve case of ch2
-    out.push((secondExists && upper2) ? rb.toUpperCase() : rb);
+    // Determine inserted-pad type:
+    // - insertedBetweenDuplicate: we inserted 'x' because A === next letter (j < n and secondExists === false)
+    // - insertedTrailingPad: we padded at the end (j >= n and secondExists === false)
+    const insertedBetweenDuplicate = (!secondExists && j < n);
+    const insertedTrailingPad = (!secondExists && j >= n);
+
+    // Output second:
+    // - If this was a trailing pad, preserve the case of the first letter (so uppercase -> uppercase 'X')
+    // - If this was an inserted between-duplicate pad, keep lowercase (lowercase 'x')
+    // - Otherwise (a real consumed second letter), preserve second letter case (upper2)
+    if (insertedTrailingPad) {
+      out.push(upper1 ? rb.toUpperCase() : rb);
+    } else if (insertedBetweenDuplicate) {
+      out.push(rb); // keep lowercase for inserted x between duplicate letters
+    } else {
+      out.push((secondExists && upper2) ? rb.toUpperCase() : rb);
+    }
 
     // advance
     if (j < n && A !== norm(text[j])) {
@@ -177,3 +194,5 @@ function cleanDecryptedKeepPunct(text) {
 
   return out.join('');
 }
+
+export { encrypt, decrypt, cleanDecryptedKeepPunct, generateKeyTable, matrixToString };

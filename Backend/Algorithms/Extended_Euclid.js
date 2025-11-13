@@ -51,5 +51,6 @@ function modInvBig(a, m) {
   if (g !== 1n) return null;
   return modBig(x, m < 0n ? -m : m);
 }
+export { egcd, modInv };
 
 

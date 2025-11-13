@@ -16,8 +16,9 @@ function modInv(a, m = MOD) {
 }
 
 const isLetter = ch => /[A-Za-z]/.test(ch);
-const toVal    = ch => ch.toUpperCase().charCodeAt(0) - 65;  // A->0
-const fromVal  = (v, isUpper) => (isUpper ? String.fromCharCode(65 + v) : String.fromCharCode(97 + v));
+const toVal    = ch => ch.toUpperCase().charCodeAt(0) - 65; // A->0
+const fromVal  = (v, isUpper) =>
+  isUpper ? String.fromCharCode(65 + v) : String.fromCharCode(97 + v);
 
 // --- matrix helpers (2x2 or 3x3 only) ---
 function detMod(mat) {
@@ -69,13 +70,7 @@ function mulMatVec(A, v) {
   return out;
 }
 
-function fmtMatrix(M) {
-  const num = M.map(r => r.map(x => mod(x)).map(x => x.toString().padStart(2,' ')).join(' ')).join('\n');
-  const letters = M.map(r => r.map(x => String.fromCharCode(65 + mod(x))).join(' ')).join('\n');
-  return `# Numeric (mod 26)\n${num}\n# As letters (A=0)\n${letters}`;
-}
-
-// --------- FIXED: streaming process that outputs full final block (ciphertext may grow) ---------
+// --------- core process (enc/dec), emits full last block on encrypt ---------
 function hillProcess(text, keyMat, mode = 'enc') {
   const n = keyMat.length; // 2 or 3
   if (n !== 2 && n !== 3) throw new Error("Key must be 2x2 or 3x3.");
@@ -95,18 +90,18 @@ function hillProcess(text, keyMat, mode = 'enc') {
     }
   }
 
-  // Transform in blocks, padding with X (23) to form a full block; emit ALL block outputs
+  // Transform in blocks; pad with 'X' (23) to make a full block
   const outLettersStream = [];
-  const outCasesStream   = []; // preserve case for positions that came from real letters; pads will be lowercase
+  const outCasesStream   = []; // true/false per output symbol (case to render)
   for (let i = 0; i < letters.length; i += n) {
     const block = [];
     let realCount = 0;
     for (let k = 0; k < n; k++) {
       if (i + k < letters.length) { block.push(letters[i + k]); realCount++; }
-      else                         { block.push(toVal('X')); } // pad for math
+      else                         { block.push(toVal('X')); } // padding for math
     }
     const res = mulMatVec(mode === 'enc' ? K : Ki, block);
-    // push all outputs; for padded positions, mark case as false (lowercase)
+    // push all outputs; for padded inputs, mark lowercase
     for (let k = 0; k < n; k++) {
       outLettersStream.push(res[k]);
       outCasesStream.push(k < realCount ? cases[i + k] : false);
@@ -121,14 +116,32 @@ function hillProcess(text, keyMat, mode = 'enc') {
     out[pos] = fromVal(outLettersStream[t], outCasesStream[t]);
   }
 
-  // If we produced extra outputs from the final padded block, append them at the very end.
-  // Keep them lowercase to signal padding-origin letters.
+  // If we produced extra outputs from the final padded block, append them at the very end (lowercase)
   for (let t = L; t < outLettersStream.length; t++) {
     out.push(fromVal(outLettersStream[t], false));
   }
 
+  let finalText = out.join('');
+
+  // On decrypt: trim at most (n-1) trailing lowercase 'x' letters (skip spaces/punct)
+  if (mode === 'dec') {
+    const arr = finalText.split('');
+    let removed = 0;
+    for (let i = arr.length - 1; i >= 0 && removed < (n - 1); i--) {
+      const ch = arr[i];
+      if (!isLetter(ch)) continue;            // skip punctuation/space
+      if (ch === ch.toLowerCase() && ch === 'x') {
+        arr.splice(i, 1);
+        removed++;
+        continue;
+      }
+      break; // encountered a non-padding tail letter
+    }
+    finalText = arr.join('');
+  }
+
   return {
-    result: out.join(''),
+    result: finalText,
     key: K,
     inverse: mode === 'enc' ? invModMatrix(K) : Ki
   };
@@ -137,18 +150,4 @@ function hillProcess(text, keyMat, mode = 'enc') {
 function hillEncrypt(text, keyMat) { return hillProcess(text, keyMat, 'enc'); }
 function hillDecrypt(text, keyMat) { return hillProcess(text, keyMat, 'dec'); }
 
-// Helper to strip trailing padding X/x that came from final block padding
-function stripTrailingPadX(s) {
-  let i = s.length - 1;
-  while (i >= 0) {
-    const ch = s[i];
-    if (isLetter(ch)) {
-      if (ch.toUpperCase() === 'X') { i--; continue; }
-      break;
-    }
-    i--;
-  }
-  return s.slice(0, i + 1);
-}
-
-
+export { hillEncrypt, hillDecrypt };
