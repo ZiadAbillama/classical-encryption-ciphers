@@ -1,27 +1,41 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { ThemeProvider } from './contexts/ThemeContext';
-import LoginPage from './pages/LoginPage';
-import SignupPage from './pages/SignupPage';
-import HomePage from './pages/HomePage';
-import CipherLabPage from './pages/CipherLabPage';
-import MissionsPage from './pages/MissionsPage';
-import ProfilePage from './pages/ProfilePage';
+import React from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
+
+import LoginPage from "./pages/LoginPage";
+import SignupPage from "./pages/SignupPage";
+import HomePage from "./pages/HomePage";
+import CipherLabPage from "./pages/CipherLabPage";
+import MissionsPage from "./pages/MissionsPage";
+import ProfilePage from "./pages/ProfilePage";
+import OAuthCallbackPage from "./pages/OAuthCallbackPage";
 
 // Protected Route Component using useAuth
 const ProtectedRoute = ({ element }) => {
   const { user, loading } = useAuth();
-  
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="text-white text-2xl font-bold">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-200">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-slate-400">Loading your workspace…</p>
+        </div>
       </div>
     );
   }
-  
-  return user ? element : <Navigate to="/login" replace />;
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return element;
 };
 
 function App() {
@@ -30,12 +44,30 @@ function App() {
       <ThemeProvider>
         <AuthProvider>
           <Routes>
+            {/* Public routes */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
+
+            {/* OAuth callback (public, used after Google/GitHub redirect) */}
+            <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
+
+            {/* Protected routes */}
             <Route path="/" element={<ProtectedRoute element={<HomePage />} />} />
-            <Route path="/cipherlab" element={<ProtectedRoute element={<CipherLabPage />} />} />
-            <Route path="/missions" element={<ProtectedRoute element={<MissionsPage />} />} />
-            <Route path="/profile" element={<ProtectedRoute element={<ProfilePage />} />} />
+            <Route
+              path="/cipherlab"
+              element={<ProtectedRoute element={<CipherLabPage />} />}
+            />
+            <Route
+              path="/missions"
+              element={<ProtectedRoute element={<MissionsPage />} />}
+            />
+            <Route
+              path="/profile"
+              element={<ProtectedRoute element={<ProfilePage />} />}
+            />
+
+            {/* Fallback: go home (will redirect to login if not authed) */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AuthProvider>
       </ThemeProvider>
