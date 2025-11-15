@@ -1,6 +1,6 @@
 // Frontend/src/pages/CipherLabPage.js
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Lock, Unlock, Key, Grid3x3, Hash, Calculator, Copy, Check, Zap,
   Trophy, Sparkles, CheckCircle2, Sun, Moon, Flame
@@ -25,6 +25,100 @@ const CipherLabPage = () => {
   const { user, updateUser } = useAuth();
   const { theme, currentTheme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
+  const missionId = location.state?.missionId || null;
+  const fromMissions = !!missionId;
+
+  // metadata for the missions (for pre-filling + nice banner)
+  const missionMeta = {
+    affine_first: {
+      cipher: 'affine',
+      title: 'The Beginning',
+      description: 'Encrypt "HELLO" with a=5, b=8',
+      target: 'RCLLA',
+    },
+    vigenere_keyword: {
+      cipher: 'vigenere',
+      title: 'Keyword Master',
+      description: 'Encrypt "CRYPTO" with keyword "KEY"',
+      target: 'MBSDZC',
+    },
+    affine_crack: {
+      cipher: 'affine',
+      title: 'Code Breaker',
+      description: 'Crack an affine cipher using frequency analysis',
+    },
+    hill_matrix: {
+      cipher: 'hill',
+      title: 'Matrix Warrior',
+      description: 'Master the Hill cipher with matrix operations',
+    },
+    mono_substitution: {
+      cipher: 'mono',
+      title: 'Alphabet Alchemist',
+      description: 'Create a custom substitution cipher',
+    },
+    playfair_digraph: {
+      cipher: 'playfair',
+      title: 'Digraph Master',
+      description: 'Encrypt text using the Playfair cipher',
+    },
+  };
+
+  const activeMission = missionId ? missionMeta[missionId] : null;
+
+  function doesRunCompleteMission(mId, ctx) {
+    const norm = (s) => (s || '').replace(/\s+/g, '').toUpperCase();
+
+    switch (mId) {
+      case 'affine_first':
+        return (
+          ctx.selectedCipher === 'affine' &&
+          ctx.mode === 'encrypt' &&
+          norm(ctx.inputText) === 'HELLO' &&
+          Number(ctx.affineA) === 5 &&
+          Number(ctx.affineB) === 8 &&
+          norm(ctx.result) === 'RCLLA'
+        );
+
+      case 'vigenere_keyword':
+        return (
+          ctx.selectedCipher === 'vigenere' &&
+          ctx.mode === 'encrypt' &&
+          norm(ctx.inputText) === 'CRYPTO' &&
+          norm(ctx.vigenereKey) === 'KEY' &&
+          norm(ctx.result) === 'MBSDZC'
+        );
+
+      case 'affine_crack':
+        return (
+          ctx.selectedCipher === 'affine' &&
+          ctx.showCrack === true &&
+          ctx.result && ctx.result.length > 0
+        );
+
+      case 'hill_matrix':
+        return (
+          ctx.selectedCipher === 'hill' &&
+          ctx.result && ctx.result.length > 0
+        );
+
+      case 'mono_substitution':
+        return (
+          ctx.selectedCipher === 'mono' &&
+          ctx.result && ctx.result.length > 0
+        );
+
+      case 'playfair_digraph':
+        return (
+          ctx.selectedCipher === 'playfair' &&
+          ctx.result && ctx.result.length > 0
+        );
+
+      default:
+        return false;
+    }
+  }
 
   const [selectedCipher, setSelectedCipher] = useState(null);
   const [inputText, setInputText] = useState('');
@@ -42,7 +136,6 @@ const CipherLabPage = () => {
   const [showCrack, setShowCrack] = useState(false);
 
   const [monoKey, setMonoKey] = useState('QWERTYUIOPASDFGHJKLZXCVBNM');
-
   const [vigenereKey, setVigenereKey] = useState('KEY');
 
   const [playfairKey, setPlayfairKey] = useState('MONARCHY');
@@ -51,40 +144,84 @@ const CipherLabPage = () => {
   const [hillMatrix, setHillMatrix] = useState([[6, 24, 1], [13, 16, 10], [20, 17, 15]]);
   const [hillInverse, setHillInverse] = useState(null);
   const [hillSize, setHillSize] = useState(3);
+
   // --- Hill helpers & defaults ---
-const HILL_DEFAULT_2 = [[3, 3], [2, 5]];
-const HILL_DEFAULT_3 = [[6, 24, 1], [13, 16, 10], [20, 17, 15]];
+  const HILL_DEFAULT_2 = [[3, 3], [2, 5]];
+  const HILL_DEFAULT_3 = [[6, 24, 1], [13, 16, 10], [20, 17, 15]];
 
-const onHillSizeChange = (size) => {
-  setHillSize(size);
-  setHillMatrix(size === 2 ? HILL_DEFAULT_2 : HILL_DEFAULT_3);
-  setHillInverse(null);
-  setOutputText('');
-};
+  const onHillSizeChange = (size) => {
+    setHillSize(size);
+    setHillMatrix(size === 2 ? HILL_DEFAULT_2 : HILL_DEFAULT_3);
+    setHillInverse(null);
+    setOutputText('');
+  };
 
-const updateHillCell = (r, c, val) => {
-  const m = hillMatrix.map(row => row.slice());
-  const num = Number(val);
-  m[r][c] = Number.isFinite(num) ? num : 0; // allow any integers
-  setHillMatrix(m);
-};
+  const updateHillCell = (r, c, val) => {
+    const m = hillMatrix.map(row => row.slice());
+    const num = Number(val);
+    m[r][c] = Number.isFinite(num) ? num : 0;
+    setHillMatrix(m);
+  };
+
   const [euclidA, setEuclidA] = useState(15);
   const [euclidM, setEuclidM] = useState(26);
   const [euclidResult, setEuclidResult] = useState('');
 
   const ciphers = [
-    { id: 'affine',   name: 'Affine Cipher',     icon: Hash,      description: 'Mathematical magic with C = aP + b (mod 26)',
-      gradient: theme === 'dark' ? 'from-cyan-600 via-blue-700 to-blue-800' : 'from-cyan-400 via-blue-500 to-blue-600' },
-    { id: 'mono',     name: 'Mono-Alphabetic',   icon: Key,       description: 'Classic substitution with your custom alphabet',
-      gradient: theme === 'dark' ? 'from-purple-600 via-purple-700 to-pink-800' : 'from-purple-400 via-purple-500 to-pink-600' },
-    { id: 'vigenere', name: 'Vigenère Cipher',   icon: Lock,      description: 'Polyalphabetic powerhouse with keyword magic',
-      gradient: theme === 'dark' ? 'from-green-600 via-emerald-700 to-teal-800' : 'from-green-400 via-emerald-500 to-teal-600' },
-    { id: 'playfair', name: 'Playfair Cipher',   icon: Grid3x3,   description: 'Digraph encryption with 5×5 matrix wizardry',
-      gradient: theme === 'dark' ? 'from-orange-600 via-red-700 to-red-800' : 'from-orange-400 via-red-500 to-red-600' },
-    { id: 'hill',     name: 'Hill Cipher',       icon: Grid3x3,   description: 'Linear algebra meets cryptography',
-      gradient: theme === 'dark' ? 'from-indigo-600 via-purple-700 to-purple-800' : 'from-indigo-400 via-purple-500 to-purple-600' },
-    { id: 'euclid',   name: 'Extended Euclid',   icon: Calculator,description: 'Mathematical foundation for modular arithmetic',
-      gradient: theme === 'dark' ? 'from-amber-600 via-orange-700 to-orange-800' : 'from-amber-400 via-orange-500 to-orange-600' },
+    {
+      id: 'affine',
+      name: 'Affine Cipher',
+      icon: Hash,
+      description: 'Mathematical magic with C = aP + b (mod 26)',
+      gradient: theme === 'dark'
+        ? 'from-cyan-600 via-blue-700 to-blue-800'
+        : 'from-cyan-400 via-blue-500 to-blue-600'
+    },
+    {
+      id: 'mono',
+      name: 'Mono-Alphabetic',
+      icon: Key,
+      description: 'Classic substitution with your custom alphabet',
+      gradient: theme === 'dark'
+        ? 'from-purple-600 via-purple-700 to-pink-800'
+        : 'from-purple-400 via-purple-500 to-pink-600'
+    },
+    {
+      id: 'vigenere',
+      name: 'Vigenère Cipher',
+      icon: Lock,
+      description: 'Polyalphabetic powerhouse with keyword magic',
+      gradient: theme === 'dark'
+        ? 'from-green-600 via-emerald-700 to-teal-800'
+        : 'from-green-400 via-emerald-500 to-teal-600'
+    },
+    {
+      id: 'playfair',
+      name: 'Playfair Cipher',
+      icon: Grid3x3,
+      description: 'Digraph encryption with 5×5 matrix wizardry',
+      gradient: theme === 'dark'
+        ? 'from-orange-600 via-red-700 to-red-800'
+        : 'from-orange-400 via-red-500 to-red-600'
+    },
+    {
+      id: 'hill',
+      name: 'Hill Cipher',
+      icon: Grid3x3,
+      description: 'Linear algebra meets cryptography',
+      gradient: theme === 'dark'
+        ? 'from-indigo-600 via-purple-700 to-purple-800'
+        : 'from-indigo-400 via-purple-500 to-purple-600'
+    },
+    {
+      id: 'euclid',
+      name: 'Extended Euclid',
+      icon: Calculator,
+      description: 'Mathematical foundation for modular arithmetic',
+      gradient: theme === 'dark'
+        ? 'from-amber-600 via-orange-700 to-orange-800'
+        : 'from-amber-400 via-orange-500 to-orange-600'
+    },
   ];
 
   const copyToClipboard = async () => {
@@ -100,25 +237,30 @@ const updateHillCell = (r, c, val) => {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  const awardPoints = (points, reason) => {
-    const newPoints = user.stats.points + points;
-    const newLevel  = Math.floor(newPoints / 500) + 1;
-    const newCombo  = user.stats.combo + 1;
+  // awardPoints now takes an optional userState so it doesn't overwrite mission progress
+  const awardPoints = (points, reason, userState) => {
+    const u = userState || user;
 
-    if (newLevel > user.stats.level) {
+    const newPoints = u.stats.points + points;
+    const newLevel = Math.floor(newPoints / 500) + 1;
+    const newCombo = u.stats.combo + 1;
+
+    if (newLevel > u.stats.level) {
       showNotification(`🎉 LEVEL UP! You're now level ${newLevel}!`, 'levelup');
     }
 
-    updateUser({
-      ...user,
+    const updatedUser = {
+      ...u,
       stats: {
-        ...user.stats,
+        ...u.stats,
         points: newPoints,
         level: newLevel,
         combo: newCombo,
-        bestCombo: Math.max(newCombo, user.stats.bestCombo)
-      }
-    });
+        bestCombo: Math.max(newCombo, u.stats.bestCombo),
+      },
+    };
+
+    updateUser(updatedUser);
 
     setRecentReward({ points, reason });
     setTimeout(() => setRecentReward(null), 2000);
@@ -128,6 +270,7 @@ const updateHillCell = (r, c, val) => {
   const handleProcess = async () => {
     try {
       let result = '';
+      let missionCompletedNow = false;
 
       switch (selectedCipher) {
         case 'affine': {
@@ -146,8 +289,26 @@ const updateHillCell = (r, c, val) => {
               setOutputText('');
               showNotification('No crack candidates returned.', 'error');
             }
+
+            // Mission check for crack variant
+            if (activeMission) {
+              const completed = doesRunCompleteMission(missionId, {
+                selectedCipher,
+                mode,
+                inputText,
+                result: r.preview || (r.candidates?.[0]?.preview ?? ''),
+                affineA,
+                affineB,
+                vigenereKey,
+                showCrack: true,
+              });
+              if (completed) missionCompletedNow = true;
+            }
+
+            // No generic stats update for crack path here; you can add if you want later
             return;
           }
+
           const path = mode === 'encrypt' ? "/api/affine/encrypt" : "/api/affine/decrypt";
           const r = await postJSON(path, { text: inputText, a: affineA, b: affineB });
           result = r.result;
@@ -193,7 +354,6 @@ const updateHillCell = (r, c, val) => {
         }
 
         case 'euclid': {
-          // validate inputs (allow negatives; forbid m = 0)
           if (!Number.isFinite(euclidA) || !Number.isInteger(euclidA)) {
             showNotification('Enter a valid integer for a.', 'error'); return;
           }
@@ -201,7 +361,7 @@ const updateHillCell = (r, c, val) => {
             showNotification('Modulo (m) must be a non-zero integer.', 'error'); return;
           }
 
-          const r = await postJSON("/api/euclid", { a: euclidA, m: euclidM }); // <— use backend
+          const r = await postJSON("/api/euclid", { a: euclidA, m: euclidM });
           const absM = Math.abs(euclidM);
           const normInv = r.inverse === null ? null : ((r.inverse % absM) + absM) % absM;
 
@@ -212,10 +372,9 @@ const updateHillCell = (r, c, val) => {
               : `✗ No modular inverse (GCD ≠ 1)`) +
             `\nBézout: ${euclidA}·${r.coefficients.x} + ${euclidM}·${r.coefficients.y} = ${r.gcd}`
           );
-  awardPoints(50, 'Calculation');
-  return;
-}
-
+          awardPoints(50, 'Calculation', user);
+          return;
+        }
 
         default:
           return;
@@ -223,49 +382,136 @@ const updateHillCell = (r, c, val) => {
 
       setOutputText(result);
 
-      // progress & rewards
-      const newStats = {
+      // ----- Mission completion check -----
+      if (activeMission) {
+        const alreadyDone = (user.stats.completedChallenges || []).includes(missionId);
+
+        if (!alreadyDone) {
+          const completed = doesRunCompleteMission(missionId, {
+            selectedCipher,
+            mode,
+            inputText,
+            result,
+            affineA,
+            affineB,
+            vigenereKey,
+            showCrack,
+          });
+
+          if (completed) {
+            missionCompletedNow = true;
+            showNotification(
+              `✅ Mission complete: ${activeMission.title}`,
+              'success'
+            );
+          }
+        }
+      }
+
+      // ----- Progress & rewards (including mission completion → completedChallenges) -----
+      const completedSet = new Set(user.stats.completedChallenges || []);
+      if (missionCompletedNow && missionId) completedSet.add(missionId);
+
+      const statsWithMissions = {
         ...user.stats,
-        totalEncryptions: mode === 'encrypt' ? user.stats.totalEncryptions + 1 : user.stats.totalEncryptions,
-        totalDecryptions: mode === 'decrypt' ? user.stats.totalDecryptions + 1 : user.stats.totalDecryptions,
+        totalEncryptions: mode === 'encrypt'
+          ? user.stats.totalEncryptions + 1
+          : user.stats.totalEncryptions,
+        totalDecryptions: mode === 'decrypt'
+          ? user.stats.totalDecryptions + 1
+          : user.stats.totalDecryptions,
         experiencedCiphers: user.stats.experiencedCiphers.includes(selectedCipher)
           ? user.stats.experiencedCiphers
-          : [...user.stats.experiencedCiphers, selectedCipher]
+          : [...user.stats.experiencedCiphers, selectedCipher],
+        completedChallenges: Array.from(completedSet),
       };
-      updateUser({ ...user, stats: newStats });
+
+      const userWithStats = { ...user, stats: statsWithMissions };
 
       const basePoints = mode === 'encrypt' ? 25 : 35;
-      const comboBonus = user.stats.combo * 5;
-      awardPoints(basePoints + comboBonus, mode === 'encrypt' ? 'Encrypted' : 'Decrypted');
+      const comboBonus = userWithStats.stats.combo * 5;
+
+      // Single place where we update the user (points + updated stats)
+      awardPoints(
+        basePoints + comboBonus,
+        mode === 'encrypt' ? 'Encrypted' : 'Decrypted',
+        userWithStats
+      );
     } catch (e) {
       showNotification(e.message || 'Request failed', 'error');
     }
   };
 
+  // ===== Helper matrices / previews from backend =====
   useEffect(() => {
-  const fetchHelpers = async () => {
-    try {
-      if (selectedCipher === 'playfair' && playfairKey) {
-        const r = await postJSON("/api/playfair/encrypt", { text: "", key: playfairKey });
-        setPlayfairMatrix(r.matrix || []);
+    const fetchHelpers = async () => {
+      try {
+        if (selectedCipher === 'playfair' && playfairKey) {
+          const r = await postJSON("/api/playfair/encrypt", { text: "", key: playfairKey });
+          setPlayfairMatrix(r.matrix || []);
+        }
+        if (selectedCipher === 'hill') {
+          setHillInverse(null);
+          const r = await postJSON("/api/hill/encrypt", { text: "", keyMat: hillMatrix });
+          setHillInverse(r.inverse || null);
+        }
+      } catch (err) {
+        if (selectedCipher === 'hill') {
+          setHillInverse(null);
+          showNotification(err.message || 'Hill key not invertible (mod 26).', 'error');
+        }
       }
-      if (selectedCipher === 'hill') {
-        // Clear stale inverse quickly so UI doesn't show old matrix
-        setHillInverse(null);
-        const r = await postJSON("/api/hill/encrypt", { text: "", keyMat: hillMatrix });
-        setHillInverse(r.inverse || null);
-      }
-    } catch (err) {
-      if (selectedCipher === 'hill') {
-        setHillInverse(null);
-        showNotification(err.message || 'Hill key not invertible (mod 26).', 'error');
-      }
-    }
-  };
-  fetchHelpers();
-  // Recompute when size, matrix, cipher, or mode toggles
-}, [playfairKey, hillMatrix, hillSize, selectedCipher, mode]);
+    };
 
+    fetchHelpers();
+  }, [playfairKey, hillMatrix, hillSize, selectedCipher, mode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ===== Prefill when opened from Missions =====
+  useEffect(() => {
+    if (!activeMission) return;
+
+    switch (missionId) {
+      case 'affine_first':
+        setSelectedCipher('affine');
+        setMode('encrypt');
+        setInputText('HELLO');
+        setAffineA(5);
+        setAffineB(8);
+        setShowCrack(false);
+        break;
+
+      case 'vigenere_keyword':
+        setSelectedCipher('vigenere');
+        setMode('encrypt');
+        setInputText('CRYPTO');
+        setVigenereKey('KEY');
+        break;
+
+      case 'affine_crack':
+        setSelectedCipher('affine');
+        setShowCrack(true);
+        setMode('decrypt');
+        break;
+
+      case 'hill_matrix':
+        setSelectedCipher('hill');
+        setMode('encrypt');
+        break;
+
+      case 'mono_substitution':
+        setSelectedCipher('mono');
+        setMode('encrypt');
+        break;
+
+      case 'playfair_digraph':
+        setSelectedCipher('playfair');
+        setMode('encrypt');
+        break;
+
+      default:
+        break;
+    }
+  }, [missionId, activeMission]);
 
   const renderCipherControls = () => {
     const cipher = ciphers.find(c => c.id === selectedCipher);
@@ -278,22 +524,24 @@ const updateHillCell = (r, c, val) => {
               <h3 className={`text-lg font-bold ${currentTheme.text}`}>Configuration</h3>
               <button
                 onClick={() => {
-                      setShowCrack(prev => {
-                        const next = !prev;
-                        if (next) {          // just entered Crack Mode
-                          setInputText('');
-                          setOutputText('');
-                        }
-                        return next;
-                      });
-                    }}
-                    className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                      showCrack
-                        ? 'bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-lg'
-                        : theme === 'dark' ? 'bg-slate-700 text-slate-200 hover:bg-slate-600' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-                    }`}
-                  >
-                    {showCrack ? '🔓 Crack Mode' : '🔐 Normal Mode'}
+                  setShowCrack(prev => {
+                    const next = !prev;
+                    if (next) {
+                      setInputText('');
+                      setOutputText('');
+                    }
+                    return next;
+                  });
+                }}
+                className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                  showCrack
+                    ? 'bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-lg'
+                    : theme === 'dark'
+                      ? 'bg-slate-700 text-slate-200 hover:bg-slate-600'
+                      : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                }`}
+              >
+                {showCrack ? '🔓 Crack Mode' : '🔐 Normal Mode'}
               </button>
             </div>
 
@@ -340,7 +588,7 @@ const updateHillCell = (r, c, val) => {
                       type="number"
                       value={affineA}
                       onChange={(e) => setAffineA(parseInt(e.target.value) || 1)}
-                      className={`w-full ${currentTheme.input} ${currentTheme.inputFocus} border-2 rounded-lg px-4 py-3 ${currentTheme.text} font-bold text-lg focus:outline-none transition-all`}
+                      className={`w-full ${currentTheme.input} ${currentTheme.inputFocus} border-2 rounded-lg px-4 py-3 ${currentTheme.text} font-bold text-lg focus:outline-none`}
                     />
                   </div>
                   <div>
@@ -349,7 +597,7 @@ const updateHillCell = (r, c, val) => {
                       type="number"
                       value={affineB}
                       onChange={(e) => setAffineB(parseInt(e.target.value) || 0)}
-                      className={`w-full ${currentTheme.input} ${currentTheme.inputFocus} border-2 rounded-lg px-4 py-3 ${currentTheme.text} font-bold text-lg focus:outline-none transition-all`}
+                      className={`w-full ${currentTheme.input} ${currentTheme.inputFocus} border-2 rounded-lg px-4 py-3 ${currentTheme.text} font-bold text-lg focus:outline-none`}
                     />
                   </div>
                 </div>
@@ -375,7 +623,7 @@ const updateHillCell = (r, c, val) => {
                 value={monoKey}
                 onChange={(e) => setMonoKey(e.target.value.toUpperCase().slice(0, 26))}
                 maxLength={26}
-                className={`w-full ${currentTheme.input} ${currentTheme.inputFocus} border-2 rounded-lg px-4 py-3 ${currentTheme.text} font-mono text-lg tracking-wider focus:outline-none transition-all`}
+                className={`w-full ${currentTheme.input} ${currentTheme.inputFocus} border-2 rounded-lg px-4 py-3 ${currentTheme.text} font-mono text-lg tracking-wider focus:outline-none`}
               />
               <div className="flex items-center justify-between mt-2">
                 <span className={`text-sm font-medium ${monoKey.length === 26 ? 'text-green-500' : 'text-amber-500'}`}>
@@ -407,7 +655,7 @@ const updateHillCell = (r, c, val) => {
                 type="text"
                 value={vigenereKey}
                 onChange={(e) => setVigenereKey(e.target.value)}
-                className={`w-full ${currentTheme.input} ${currentTheme.inputFocus} border-2 rounded-lg px-4 py-3 ${currentTheme.text} font-bold text-lg tracking-wide focus:outline-none transition-all`}
+                className={`w-full ${currentTheme.input} ${currentTheme.inputFocus} border-2 rounded-lg px-4 py-3 ${currentTheme.text} font-bold text-lg tracking-wide focus:outline-none`}
                 placeholder="Enter your keyword..."
               />
             </div>
@@ -432,7 +680,7 @@ const updateHillCell = (r, c, val) => {
                 type="text"
                 value={playfairKey}
                 onChange={(e) => setPlayfairKey(e.target.value)}
-                className={`w-full ${currentTheme.input} ${currentTheme.inputFocus} border-2 rounded-lg px-4 py-3 ${currentTheme.text} font-bold text-lg focus:outline-none transition-all`}
+                className={`w-full ${currentTheme.input} ${currentTheme.inputFocus} border-2 rounded-lg px-4 py-3 ${currentTheme.text} font-bold text-lg focus:outline-none`}
               />
             </div>
             {playfairMatrix.length === 5 && (
@@ -460,103 +708,104 @@ const updateHillCell = (r, c, val) => {
 
       case 'hill':
         return (
-    <div className="space-y-4">
-      <div>
-        <label className={`block ${currentTheme.textMuted} text-sm mb-2 font-medium`}>Matrix Size</label>
-        <select
-          value={hillSize}
-          onChange={(e) => onHillSizeChange(parseInt(e.target.value))}
-          className={`w-full ${currentTheme.input} ${currentTheme.inputFocus} border-2 rounded-lg px-4 py-3 ${currentTheme.text} font-bold focus:outline-none`}
-        >
-          <option value={2}>2×2 Matrix</option>
-          <option value={3}>3×3 Matrix</option>
-        </select>
-      </div>
+          <div className="space-y-4">
+            <div>
+              <label className={`block ${currentTheme.textMuted} text-sm mb-2 font-medium`}>Matrix Size</label>
+              <select
+                value={hillSize}
+                onChange={(e) => onHillSizeChange(parseInt(e.target.value))}
+                className={`w-full ${currentTheme.input} ${currentTheme.inputFocus} border-2 rounded-lg px-4 py-3 ${currentTheme.text} font-bold focus:outline-none`}
+              >
+                <option value={2}>2×2 Matrix</option>
+                <option value={3}>3×3 Matrix</option>
+              </select>
+            </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        {/* Editable Key Matrix */}
-        <div className={`${theme === 'dark' ? 'bg-indigo-500/10 border-indigo-500/30' : 'bg-indigo-50 border-indigo-200'} border-2 rounded-xl p-4`}>
-          <div className={`${theme === 'dark' ? 'text-indigo-400' : 'text-indigo-700'} font-bold mb-3 flex items-center`}>
-            <Grid3x3 className="w-4 h-4 mr-2" />
-            Key Matrix 
+            <div className="grid grid-cols-2 gap-4">
+              {/* Editable Key Matrix */}
+              <div className={`${theme === 'dark' ? 'bg-indigo-500/10 border-indigo-500/30' : 'bg-indigo-50 border-indigo-200'} border-2 rounded-xl p-4`}>
+                <div className={`${theme === 'dark' ? 'text-indigo-400' : 'text-indigo-700'} font-bold mb-3 flex items-center`}>
+                  <Grid3x3 className="w-4 h-4 mr-2" />
+                  Key Matrix
+                </div>
+
+                <div
+                  className="grid gap-2"
+                  style={{ gridTemplateColumns: `repeat(${hillSize}, minmax(0, 1fr))` }}
+                >
+                  {hillMatrix.map((row, r) =>
+                    row.map((val, c) => (
+                      <input
+                        key={`${r}-${c}`}
+                        type="number"
+                        step="1"
+                        value={val}
+                        onChange={(e) => updateHillCell(r, c, e.target.value)}
+                        className={`text-center ${currentTheme.input} ${currentTheme.inputFocus} border-2 rounded-lg px-3 py-2 ${currentTheme.text} font-mono`}
+                      />
+                    ))
+                  )}
+                </div>
+
+                <div className={`${currentTheme.textMuted} text-xs mt-3`}>
+                  You can enter any integers (negatives allowed). Values are taken mod 26.
+                </div>
+              </div>
+
+              {/* Inverse panel */}
+              <div className={`${theme === 'dark' ? 'bg-purple-500/10 border-purple-500/30' : 'bg-purple-50 border-purple-200'} border-2 rounded-xl p-4`}>
+                <div className={`${theme === 'dark' ? 'text-purple-400' : 'text-purple-700'} font-bold mb-3 flex items-center`}>
+                  <Calculator className="w-4 h-4 mr-2" />
+                  Inverse
+                </div>
+                <pre className={`${currentTheme.text} font-mono text-sm leading-relaxed`}>
+                  {Array.isArray(hillInverse)
+                    ? hillInverse.map(row => `[ ${row.join('  ')} ]`).join('\n')
+                    : 'Not invertible for mod 26'}
+                </pre>
+              </div>
+            </div>
+
+            <div className={`${currentTheme.textMuted} text-xs`}>
+              If the key isn’t invertible (det not coprime with 26), an error appears and inverse shows “Not invertible”.
+            </div>
           </div>
-
-          <div
-            className="grid gap-2"
-            style={{ gridTemplateColumns: `repeat(${hillSize}, minmax(0, 1fr))` }}
-          >
-            {hillMatrix.map((row, r) =>
-              row.map((val, c) => (
-                <input
-                  key={`${r}-${c}`}
-                  type="number"
-                  step="1"
-                  value={val}
-                  onChange={(e) => updateHillCell(r, c, e.target.value)}
-                  className={`text-center ${currentTheme.input} ${currentTheme.inputFocus} border-2 rounded-lg px-3 py-2 ${currentTheme.text} font-mono`}
-                />
-              ))
-            )}
-          </div>
-
-          <div className={`${currentTheme.textMuted} text-xs mt-3`}>
-            You can enter any integers (negatives allowed). Values are taken mod 26.
-          </div>
-        </div>
-
-        {/* Inverse panel */}
-        <div className={`${theme === 'dark' ? 'bg-purple-500/10 border-purple-500/30' : 'bg-purple-50 border-purple-200'} border-2 rounded-xl p-4`}>
-          <div className={`${theme === 'dark' ? 'text-purple-400' : 'text-purple-700'} font-bold mb-3 flex items-center`}>
-            <Calculator className="w-4 h-4 mr-2" />
-            Inverse
-          </div>
-          <pre className={`${currentTheme.text} font-mono text-sm leading-relaxed`}>
-            {Array.isArray(hillInverse)
-              ? hillInverse.map(row => `[ ${row.join('  ')} ]`).join('\n')
-              : 'Not invertible for mod 26'}
-          </pre>
-        </div>
-      </div>
-
-      <div className={`${currentTheme.textMuted} text-xs`}>
-        If the key isn’t invertible (det not coprime with 26), an error appears and inverse shows “Not invertible”.
-      </div>
-    </div>
-  );
+        );
 
       case 'euclid':
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className={`block ${currentTheme.textMuted} text-sm mb-2 font-medium`}>Integer (a)</label>
-          <input
-            type="number"
-            step="1"
-            value={euclidA}
-            onChange={(e) => setEuclidA(Number(e.target.value))}   // ← allow negatives; no fallback to 1
-            className={`w-full ${currentTheme.input} ${currentTheme.inputFocus} border-2 rounded-lg px-4 py-3 ${currentTheme.text} font-bold text-lg focus:outline-none`}
-          />
-        </div>
-        <div>
-          <label className={`block ${currentTheme.textMuted} text-sm mb-2 font-medium`}>Modulo (m)</label>
-          <input
-            type="number"
-            step="1"
-            value={euclidM}
-            onChange={(e) => setEuclidM(Number(e.target.value))}   // ← allow negative typing; we’ll validate on calculate
-            className={`w-full ${currentTheme.input} ${currentTheme.inputFocus} border-2 rounded-lg px-4 py-3 ${currentTheme.text} font-bold text-lg focus:outline-none`}
-          />
-        </div>
-      </div>
-      {euclidResult && (
-        <div className={`${theme === 'dark' ? 'bg-amber-500/10 border-amber-500/30' : 'bg-amber-50 border-amber-200'} border-2 rounded-xl p-4`}>
-          <div className={`${theme === 'dark' ? 'text-amber-400' : 'text-amber-700'} font-bold mb-3`}>Result</div>
-          <pre className={`${currentTheme.text} font-mono text-sm whitespace-pre-wrap leading-relaxed`}>{euclidResult}</pre>
-        </div>
-      )}
-    </div>
-  );
+        return (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={`block ${currentTheme.textMuted} text-sm mb-2 font-medium`}>Integer (a)</label>
+                <input
+                  type="number"
+                  step="1"
+                  value={euclidA}
+                  onChange={(e) => setEuclidA(Number(e.target.value))}
+                  className={`w-full ${currentTheme.input} ${currentTheme.inputFocus} border-2 rounded-lg px-4 py-3 ${currentTheme.text} font-bold text-lg focus:outline-none`}
+                />
+              </div>
+              <div>
+                <label className={`block ${currentTheme.textMuted} text-sm mb-2 font-medium`}>Modulo (m)</label>
+                <input
+                  type="number"
+                  step="1"
+                  value={euclidM}
+                  onChange={(e) => setEuclidM(Number(e.target.value))}
+                  className={`w-full ${currentTheme.input} ${currentTheme.inputFocus} border-2 rounded-lg px-4 py-3 ${currentTheme.text} font-bold text-lg focus:outline-none`}
+                />
+              </div>
+            </div>
+            {euclidResult && (
+              <div className={`${theme === 'dark' ? 'bg-amber-500/10 border-amber-500/30' : 'bg-amber-50 border-amber-200'} border-2 rounded-xl p-4`}>
+                <div className={`${theme === 'dark' ? 'text-amber-400' : 'text-amber-700'} font-bold mb-3`}>Result</div>
+                <pre className={`${currentTheme.text} font-mono text-sm whitespace-pre-wrap leading-relaxed`}>{euclidResult}</pre>
+              </div>
+            )}
+          </div>
+        );
+
       default:
         return null;
     }
@@ -577,6 +826,11 @@ const updateHillCell = (r, c, val) => {
           <div className="flex items-center justify-between">
             <button
               onClick={() => {
+                if (fromMissions) {
+                  navigate('/missions');
+                  return;
+                }
+
                 if (selectedCipher) {
                   setSelectedCipher(null);
                   setInputText('');
@@ -587,9 +841,17 @@ const updateHillCell = (r, c, val) => {
                   navigate('/');
                 }
               }}
-              className={`px-4 py-2 ${theme === 'dark' ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-200 hover:bg-slate-300'} rounded-xl ${currentTheme.text} font-bold transition-all`}
+              className={`px-4 py-2 ${
+                theme === 'dark'
+                  ? 'bg-slate-700 hover:bg-slate-600'
+                  : 'bg-slate-200 hover:bg-slate-300'
+              } rounded-xl ${currentTheme.text} font-bold transition-all`}
             >
-              ← {selectedCipher ? 'Back to Ciphers' : 'Home'}
+              ← {fromMissions
+                ? 'Back to Missions'
+                : selectedCipher
+                ? 'Back to Ciphers'
+                : 'Home'}
             </button>
 
             <div className="flex items-center space-x-3">
@@ -671,45 +933,44 @@ const updateHillCell = (r, c, val) => {
 
               {/* Mode Toggle */}
               {selectedCipher !== 'euclid' && !showCrack && (
-  <div className="flex space-x-3 mb-6">
-    <button
-      onClick={() => {
-        setMode('encrypt');
-        setInputText('');
-        setOutputText('');
-      }}
-      className={`flex-1 py-3 px-6 rounded-xl font-bold transition-all shadow-lg ${
-        mode === 'encrypt'
-          ? `bg-gradient-to-r ${cipher.gradient} text-white`
-          : theme === 'dark'
-          ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-          : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
-      }`}
-    >
-      <Lock className="w-5 h-5 inline mr-2" />
-      Encrypt
-    </button>
+                <div className="flex space-x-3 mb-6">
+                  <button
+                    onClick={() => {
+                      setMode('encrypt');
+                      setInputText('');
+                      setOutputText('');
+                    }}
+                    className={`flex-1 py-3 px-6 rounded-xl font-bold transition-all shadow-lg ${
+                      mode === 'encrypt'
+                        ? `bg-gradient-to-r ${cipher.gradient} text-white`
+                        : theme === 'dark'
+                          ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                          : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+                    }`}
+                  >
+                    <Lock className="w-5 h-5 inline mr-2" />
+                    Encrypt
+                  </button>
 
-    <button
-      onClick={() => {
-        setMode('decrypt');
-        setInputText('');
-        setOutputText('');
-      }}
-      className={`flex-1 py-3 px-6 rounded-xl font-bold transition-all shadow-lg ${
-        mode === 'decrypt'
-          ? `bg-gradient-to-r ${cipher.gradient} text-white`
-          : theme === 'dark'
-          ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-          : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
-      }`}
-    >
-      <Unlock className="w-5 h-5 inline mr-2" />
-      Decrypt
-    </button>
-  </div>
-)}
-
+                  <button
+                    onClick={() => {
+                      setMode('decrypt');
+                      setInputText('');
+                      setOutputText('');
+                    }}
+                    className={`flex-1 py-3 px-6 rounded-xl font-bold transition-all shadow-lg ${
+                      mode === 'decrypt'
+                        ? `bg-gradient-to-r ${cipher.gradient} text-white`
+                        : theme === 'dark'
+                          ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                          : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+                    }`}
+                  >
+                    <Unlock className="w-5 h-5 inline mr-2" />
+                    Decrypt
+                  </button>
+                </div>
+              )}
 
               {/* Cipher Controls */}
               <div className="mb-6">
@@ -724,7 +985,7 @@ const updateHillCell = (r, c, val) => {
                     <textarea
                       value={inputText}
                       onChange={(e) => setInputText(e.target.value)}
-                      className={`w-full h-32 ${currentTheme.input} border-2 ${currentTheme.cardBorder} ${currentTheme.inputFocus} rounded-xl px-4 py-3 ${currentTheme.text} placeholder-opacity-30 focus:outline-none resize-none transition-all`}
+                      className={`w-full h-32 ${currentTheme.input} border-2 ${currentTheme.cardBorder} ${currentTheme.inputFocus} rounded-xl px-4 py-3 ${currentTheme.text} placeholder-opacity-30 focus:outline-none resize-none`}
                       placeholder="Enter your message here..."
                     />
                   </div>
@@ -769,10 +1030,10 @@ const updateHillCell = (r, c, val) => {
                 {selectedCipher === 'euclid'
                   ? '🧮 CALCULATE'
                   : showCrack
-                  ? '🔓 CRACK THE CODE'
-                  : mode === 'encrypt'
-                  ? '🔒 ENCRYPT MESSAGE'
-                  : '🔓 DECRYPT MESSAGE'
+                    ? '🔓 CRACK THE CODE'
+                    : mode === 'encrypt'
+                      ? '🔒 ENCRYPT MESSAGE'
+                      : '🔓 DECRYPT MESSAGE'
                 }
               </button>
             </div>
@@ -787,10 +1048,10 @@ const updateHillCell = (r, c, val) => {
             notification.type === 'levelup'
               ? theme === 'dark' ? 'bg-amber-500/90 border-amber-300' : 'bg-amber-100 border-amber-400'
               : notification.type === 'success'
-              ? theme === 'dark' ? 'bg-green-500/90 border-green-300' : 'bg-green-100 border-green-400'
-              : notification.type === 'error'
-              ? theme === 'dark' ? 'bg-red-500/90 border-red-300' : 'bg-red-100 border-red-400'
-              : theme === 'dark' ? 'bg-cyan-500/90 border-cyan-300' : 'bg-cyan-100 border-cyan-400'
+                ? theme === 'dark' ? 'bg-green-500/90 border-green-300' : 'bg-green-100 border-green-400'
+                : notification.type === 'error'
+                  ? theme === 'dark' ? 'bg-red-500/90 border-red-300' : 'bg-red-100 border-red-400'
+                  : theme === 'dark' ? 'bg-cyan-500/90 border-cyan-300' : 'bg-cyan-100 border-cyan-400'
           }`}>
             <div className={`${theme === 'dark' ? 'text-white' : 'text-slate-900'} font-bold text-lg`}>{notification.message}</div>
           </div>

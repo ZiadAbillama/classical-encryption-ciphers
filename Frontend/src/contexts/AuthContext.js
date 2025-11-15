@@ -14,14 +14,38 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Load user from localStorage on first render
   useEffect(() => {
     const storedUser = localStorage.getItem('cryptolab_user');
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      const parsed = JSON.parse(storedUser);
+
+      // Make sure stats always exist and have default fields
+      const defaultStats = {
+        points: 0,
+        level: 1,
+        streak: 0,
+        completedChallenges: [],
+        achievements: [],
+        totalEncryptions: 0,
+        totalDecryptions: 0,
+        experiencedCiphers: [],
+        combo: 0,
+        bestCombo: 0
+      };
+
+      setUser({
+        ...parsed,
+        stats: {
+          ...defaultStats,
+          ...(parsed.stats || {})
+        }
+      });
     }
     setLoading(false);
   }, []);
 
+  // Login: initialize a fresh user with default stats
   const login = (userData) => {
     const userWithStats = {
       ...userData,
@@ -53,7 +77,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, updateUser, loading }}>
+    <AuthContext.Provider
+      value={{ user, login, logout, updateUser, loading }}
+    >
       {children}
     </AuthContext.Provider>
   );
