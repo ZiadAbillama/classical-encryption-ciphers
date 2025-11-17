@@ -1,40 +1,18 @@
 import React, { useState } from 'react';
 import { Shield, Lock, Target, Award, Flame, Crown, Trophy, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';  // Import useTheme
 import { useNavigate } from 'react-router-dom';
 
 const HomePage = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [theme, setTheme] = useState('dark');
+  const { theme, currentTheme, toggleTheme } = useTheme();  // Use ThemeContext instead of local state
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
-  const themes = {
-    dark: {
-      bg: 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900',
-      text: 'text-white',
-      textMuted: 'text-slate-400',
-      card: 'bg-slate-800/50',
-      cardBorder: 'border-slate-700/50',
-      cardHover: 'hover:bg-slate-700/50',
-      header: 'bg-slate-900/80',
-      glow: 'blur-3xl opacity-20',
-      glowColors: ['bg-blue-500/20', 'bg-purple-500/20', 'bg-cyan-500/20']
-    },
-    light: {
-      bg: 'bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100',
-      text: 'text-slate-900',
-      textMuted: 'text-slate-600',
-      card: 'bg-white/80',
-      cardBorder: 'border-slate-200',
-      cardHover: 'hover:bg-white',
-      header: 'bg-white/80',
-      glow: 'blur-3xl opacity-30',
-      glowColors: ['bg-blue-400/30', 'bg-purple-400/30', 'bg-cyan-400/30']
-    }
-  };
-
-  const currentTheme = themes[theme];
+  // REMOVED: const [theme, setTheme] = useState('dark');
+  // REMOVED: const themes = { ... };
+  // REMOVED: const currentTheme = themes[theme];
 
   const ProfileMenu = () => (
     <div className="absolute top-16 right-4 z-50 w-80">
@@ -109,7 +87,7 @@ const HomePage = () => {
 
             <div className="flex items-center space-x-3">
               <button
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                onClick={toggleTheme}  // Changed from setTheme to toggleTheme
                 className={`p-2 ${theme === 'dark' ? 'bg-slate-700 hover:bg-slate-600' : 'bg-white hover:bg-slate-100'} ${currentTheme.cardBorder} border rounded-xl transition-all`}
               >
                 {theme === 'dark' ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-slate-700" />}
@@ -127,12 +105,11 @@ const HomePage = () => {
                 <Trophy className={`w-4 h-4 ${theme === 'dark' ? 'text-amber-400' : 'text-amber-600'}`} />
                 <span className={`${currentTheme.text} font-bold`}>{user.stats.points}</span>
               </div>
-                 <button
+              <button
                 onClick={() => setShowProfileMenu(!showProfileMenu)}
                 className={`relative flex items-center space-x-2 px-3 py-2 ${theme === 'dark' ? 'bg-slate-700 hover:bg-slate-600' : 'bg-white hover:bg-slate-100'} ${currentTheme.cardBorder} border rounded-xl transition-all`}
               >
-               <div className="w-8 h-8 bg-cyan-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-
+                <div className="w-8 h-8 bg-cyan-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
                   {user.avatar || user.name.charAt(0).toUpperCase()}
                 </div>
                 <span className={`${currentTheme.text} font-medium hidden md:block`}>
