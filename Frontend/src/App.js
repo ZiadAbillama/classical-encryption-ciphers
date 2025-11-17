@@ -21,8 +21,8 @@ import MissionAttemptPage from './pages/MissionAttemptPage';
 function App() {
   return (
     <Router>
-      <ThemeProvider>
         <AuthProvider>
+          <ThemeProvider>
           <Routes>
             {/* Public routes */}
             <Route path="/login" element={<LoginPage />} />
@@ -53,8 +53,9 @@ function App() {
             {/* Fallback: go home (will redirect to login if not authed) */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          </ThemeProvider>
         </AuthProvider>
-      </ThemeProvider>
+      
     </Router>
   );
 }
