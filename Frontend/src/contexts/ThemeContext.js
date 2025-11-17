@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
 const ThemeContext = createContext(null);
 
@@ -11,15 +11,7 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState(() => {
-    // Load theme from localStorage or default to 'dark'
-    return localStorage.getItem('cryptolab_theme') || 'dark';
-  });
-
-  useEffect(() => {
-    // Save theme to localStorage whenever it changes
-    localStorage.setItem('cryptolab_theme', theme);
-  }, [theme]);
+  const [theme, setTheme] = useState('dark');  // Just use regular state
 
   const themes = {
     dark: {
