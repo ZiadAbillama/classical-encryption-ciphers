@@ -1,3 +1,4 @@
+// Frontend/src/pages/MissionsPage.js
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -9,7 +10,8 @@ import {
   Zap,
   CheckCircle2,
   Sun,
-  Moon
+  Moon,
+  Lock
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -19,64 +21,94 @@ const MissionsPage = () => {
   const { theme, currentTheme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
+  // Mission metadata - MUST MATCH MissionAttemptPage.js exactly
   const missions = [
     {
-      id: 'affine_first',
-      cipher: 'affine',
-      title: 'The Beginning',
-      description: 'Encrypt "HELLO" with a=5, b=8',
-      target: 'RCLLA',
-      points: 100,
-      difficulty: 'Novice',
+      id: "affine_encrypt",
+      cipher: "affine",
+      title: "The Beginning",
+      description: "Encrypt 'HELLO' with a=5, b=8",
+      plaintext: "HELLO",
+      key: { a: 5, b: 8 },
+      target: "RCLLA",
+      points: 20,
+      difficulty: "Novice",
+      type: "encrypt",
       icon: Star
     },
     {
-      id: 'vigenere_keyword',
-      cipher: 'vigenere',
-      title: 'Keyword Master',
-      description: 'Encrypt "CRYPTO" with keyword "KEY"',
-      target: 'MBSDZC',
-      points: 150,
-      difficulty: 'Apprentice',
+      id: "vigenere_encrypt",
+      cipher: "vigenere",
+      title: "Keyword Master",
+      description: "Encrypt 'CRYPTO' with keyword 'KEY'",
+      plaintext: "CRYPTO",
+      key: "KEY",
+      target: "MVWZXS",
+      points: 30,
+      difficulty: "Apprentice",
+      type: "encrypt",
       icon: Key
     },
     {
-      id: 'affine_crack',
-      cipher: 'affine',
-      title: 'Code Breaker',
-      description: 'Crack an affine cipher using frequency analysis',
-      points: 300,
-      difficulty: 'Expert',
+      id: "affine_decrypt",
+      cipher: "affine",
+      title: "Reverse Engineer",
+      description: "Decrypt 'IHHW' with a=5, b=8",
+      ciphertext: "IHHW",
+      key: { a: 5, b: 8 },
+      target: "MEET",
+      points: 25,
+      difficulty: "Apprentice",
+      type: "decrypt",
+      icon: Lock
+    },
+    {
+      id: "affine_crack",
+      cipher: "affine",
+      title: "Code Breaker",
+      description: "Crack this affine cipher (hint: 'E' encrypts to 'I', 'T' encrypts to 'X'). Decrypt: 'IDRR'",
+      ciphertext: "IDRR",
+      hint: "Most common letters: E→I, T→X. This means a=5, b=4",
+      target: "MEET",
+      points: 50,
+      difficulty: "Expert",
+      type: "crack",
       icon: Sparkles
     },
     {
-      id: 'hill_matrix',
-      cipher: 'hill',
-      title: 'Matrix Warrior',
-      description: 'Master the Hill cipher with matrix operations',
-      points: 250,
-      difficulty: 'Advanced',
-      icon: Grid3x3
-    },
-    {
-      id: 'mono_substitution',
-      cipher: 'mono',
-      title: 'Alphabet Alchemist',
-      description: 'Create a custom substitution cipher',
-      points: 120,
-      difficulty: 'Novice',
+      id: "vigenere_decrypt",
+      cipher: "vigenere",
+      title: "Key Finder",
+      description: "Decrypt 'JSXWI' with keyword 'CODE'",
+      ciphertext: "JSXWI",
+      key: "CODE",
+      target: "HELLO",
+      points: 35,
+      difficulty: "Apprentice",
+      type: "decrypt",
       icon: Key
     },
     {
-      id: 'playfair_digraph',
-      cipher: 'playfair',
-      title: 'Digraph Master',
-      description: 'Encrypt text using the Playfair cipher',
-      points: 200,
-      difficulty: 'Advanced',
+      id: "playfair_encrypt",
+      cipher: "playfair",
+      title: "Digraph Master",
+      description: "Encrypt 'HELLO' using Playfair cipher with keyword 'MONARCHY'",
+      plaintext: "HELLO",
+      key: "MONARCHY",
+      target: "GATLMZ",
+      points: 40,
+      difficulty: "Advanced",
+      type: "encrypt",
       icon: Grid3x3
     }
   ];
+
+  const handleMissionClick = (missionId) => {
+    // Navigate to MissionAttemptPage with mission ID in state
+    navigate('/mission-attempt', {
+      state: { missionId: missionId }
+    });
+  };
 
   return (
     <div className={`min-h-screen ${currentTheme.bg} relative overflow-hidden`}>
@@ -98,7 +130,7 @@ const MissionsPage = () => {
                 : 'bg-slate-200 hover:bg-slate-300'
             } rounded-xl ${currentTheme.text} font-bold transition-all`}
           >
-            ← Back
+            ← Back to Home
           </button>
           <div className="flex items-center space-x-3">
             <button
@@ -220,7 +252,7 @@ const MissionsPage = () => {
             return (
               <div
                 key={mission.id}
-                className={`relative backdrop-blur-xl border-2 rounded-2xl p-6 transition-all hover:scale-105 shadow-lg ${
+                className={`relative backdrop-blur-xl border-2 rounded-2xl p-6 transition-all hover:scale-105 shadow-lg cursor-pointer ${
                   isCompleted
                     ? theme === 'dark'
                       ? 'bg-green-500/10 border-green-500/50'
@@ -312,30 +344,27 @@ const MissionsPage = () => {
                   </div>
                   {!isCompleted && (
                     <button
-                      onClick={() =>
-                        navigate('/cipherlab', {
-                          state: { missionId: mission.id }
-                        })
-                      }
+                      onClick={() => handleMissionClick(mission.id)}
                       className={`px-4 py-2 rounded-xl font-bold transition-all shadow-lg ${
                         theme === 'dark'
                           ? 'bg-purple-700 text-white hover:bg-purple-800 hover:shadow-purple-500/50'
                           : 'bg-slate-700 text-white hover:bg-slate-800 hover:shadow-slate-500/50'
                       }`}
                     >
-                      Start Mission
+                      Attempt Mission
                     </button>
                   )}
                   {isCompleted && (
-                    <div
-                      className={`px-4 py-2 rounded-xl font-bold ${
+                    <button
+                      onClick={() => handleMissionClick(mission.id)}
+                      className={`px-4 py-2 rounded-xl font-bold transition-all ${
                         theme === 'dark'
-                          ? 'bg-green-500/20 text-green-400'
-                          : 'bg-green-100 text-green-700'
+                          ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
+                          : 'bg-green-100 text-green-700 hover:bg-green-200'
                       }`}
                     >
-                      ✓ Completed
-                    </div>
+                      ✓ Review
+                    </button>
                   )}
                 </div>
               </div>

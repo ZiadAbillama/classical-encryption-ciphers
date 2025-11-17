@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   Eye,
   EyeOff,
+  Zap,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -61,14 +62,41 @@ const ProfilePage = () => {
     return () => clearTimeout(timer);
   }, [notification]);
 
+  // Mission metadata for calculating mission points
+  const missionMeta = {
+    "affine_encrypt": { points: 20 },
+    "vigenere_encrypt": { points: 30 },
+    "affine_decrypt": { points: 25 },
+    "affine_crack": { points: 50 },
+    "vigenere_decrypt": { points: 35 },
+    "playfair_encrypt": { points: 40 }
+  };
+
   const stats = user.stats || {};
   const totalEncryptions = stats.totalEncryptions || 0;
   const totalDecryptions = stats.totalDecryptions || 0;
-  const level = stats.level || 1;
-  const points = stats.points || 0;
   const combo = stats.combo || 0;
   const bestCombo = stats.bestCombo || 0;
   const experiencedCiphers = stats.experiencedCiphers || [];
+  const completedChallenges = stats.completedChallenges || [];
+
+  // Calculate points from CipherLab
+  const cipherLabPoints = stats.points || 0;
+
+  // Calculate points from completed missions
+  const missionPoints = completedChallenges.reduce((total, missionId) => {
+    const mission = missionMeta[missionId];
+    return total + (mission ? mission.points : 0);
+  }, 0);
+
+  // COMBINED TOTAL POINTS
+  const totalPoints = cipherLabPoints + missionPoints;
+
+  // Calculate level based on TOTAL points
+  const level = Math.floor(totalPoints / 500) +1 ;
+
+  // Progress within current level
+  const progressWithinLevel = totalPoints % 500;
 
   // Achievements
   const achievements = [
@@ -103,6 +131,22 @@ const ProfilePage = () => {
       icon: Crown,
       points: 500,
       unlocked: level >= 5,
+    },
+    {
+      id: 'mission_starter',
+      name: 'Mission Starter',
+      desc: 'Complete your first mission',
+      icon: Zap,
+      points: 100,
+      unlocked: completedChallenges.length > 0,
+    },
+    {
+      id: 'mission_veteran',
+      name: 'Mission Veteran',
+      desc: 'Complete 3 missions',
+      icon: Trophy,
+      points: 250,
+      unlocked: completedChallenges.length >= 3,
     },
   ];
 
@@ -199,8 +243,6 @@ const ProfilePage = () => {
   };
 
   // ---- Render ----
-
-  const progressWithinLevel = points % 500;
 
   const passwordTextClasses =
     theme === 'dark'
@@ -408,14 +450,28 @@ const ProfilePage = () => {
               </div>
             </div>
 
-            <div className="mb-2 flex items-baseline justify-between">
-              <div className={`${currentTheme.textMuted} text-xs uppercase`}>Total Points</div>
-              <div
-                className={`text-2xl font-black ${
-                  theme === 'dark' ? 'text-amber-300' : 'text-amber-600'
-                }`}
-              >
-                {points}
+            <div className="space-y-2 mb-3">
+              <div className="flex items-baseline justify-between">
+                <div className={`${currentTheme.textMuted} text-xs uppercase`}>Total Points</div>
+                <div
+                  className={`text-2xl font-black ${
+                    theme === 'dark' ? 'text-amber-300' : 'text-amber-600'
+                  }`}
+                >
+                  {totalPoints}
+                </div>
+              </div>
+              
+              {/* Points breakdown */}
+              <div className={`${currentTheme.textMuted} text-xs space-y-1 pt-2 border-t ${currentTheme.cardBorder}`}>
+                <div className="flex justify-between">
+                  <span>CipherLab:</span>
+                  <span className="font-semibold">{cipherLabPoints}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Missions:</span>
+                  <span className="font-semibold">{missionPoints}</span>
+                </div>
               </div>
             </div>
 
@@ -471,6 +527,13 @@ const ProfilePage = () => {
             icon={Target}
             label="Ciphers Tried"
             value={experiencedCiphers.length}
+          />
+          <StatCard
+            theme={theme}
+            currentTheme={currentTheme}
+            icon={Zap}
+            label="Missions Completed"
+            value={completedChallenges.length}
           />
           <StatCard
             theme={theme}

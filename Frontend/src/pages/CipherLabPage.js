@@ -1,4 +1,3 @@
-// Frontend/src/pages/CipherLabPage.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -127,6 +126,7 @@ const CipherLabPage = () => {
   const [copied, setCopied] = useState(false);
   const [notification, setNotification] = useState(null);
   const [recentReward, setRecentReward] = useState(null);
+  const [lastProcessed, setLastProcessed] = useState(''); // Track last processed input
 
   // Cipher States
   const [affineA, setAffineA] = useState(5);
@@ -268,6 +268,26 @@ const CipherLabPage = () => {
 
   // ===== Core: call backend instead of local crypto =====
   const handleProcess = async () => {
+    // Validation: Check if input is empty (except for Euclid)
+    if (selectedCipher !== 'euclid' && !inputText.trim()) {
+      showNotification('⚠️ Please enter some text to process!', 'error');
+      return;
+    }
+
+    // Validation: Check if same input is being processed again
+    const currentInput = `${selectedCipher}-${mode}-${inputText.trim().toUpperCase()}-${
+      selectedCipher === 'affine' ? `${affineA}-${affineB}-${showCrack}` :
+      selectedCipher === 'mono' ? monoKey :
+      selectedCipher === 'vigenere' ? vigenereKey :
+      selectedCipher === 'playfair' ? playfairKey :
+      selectedCipher === 'hill' ? JSON.stringify(hillMatrix) : ''
+    }`;
+
+    if (currentInput === lastProcessed && selectedCipher !== 'euclid') {
+      showNotification('⚠️ Enter different text to earn more points!', 'error');
+      return;
+    }
+
     try {
       let result = '';
       let missionCompletedNow = false;
@@ -305,7 +325,8 @@ const CipherLabPage = () => {
               if (completed) missionCompletedNow = true;
             }
 
-            // No generic stats update for crack path here; you can add if you want later
+            // Update last processed for crack
+            setLastProcessed(currentInput);
             return;
           }
 
@@ -372,7 +393,7 @@ const CipherLabPage = () => {
               : `✗ No modular inverse (GCD ≠ 1)`) +
             `\nBézout: ${euclidA}·${r.coefficients.x} + ${euclidM}·${r.coefficients.y} = ${r.gcd}`
           );
-          awardPoints(50, 'Calculation', user);
+          awardPoints(10, 'Calculation', user);
           return;
         }
 
@@ -381,6 +402,9 @@ const CipherLabPage = () => {
       }
 
       setOutputText(result);
+
+      // Update last processed input
+      setLastProcessed(currentInput);
 
       // ----- Mission completion check -----
       if (activeMission) {
@@ -428,12 +452,12 @@ const CipherLabPage = () => {
 
       const userWithStats = { ...user, stats: statsWithMissions };
 
-      const basePoints = mode === 'encrypt' ? 25 : 35;
-      const comboBonus = userWithStats.stats.combo * 5;
+      const basePoints = mode === 'encrypt' ? 10 : 10;
+      const comboBonus = userWithStats.stats.combo * 1.5;
 
       // Single place where we update the user (points + updated stats)
       awardPoints(
-        basePoints + comboBonus,
+        basePoints+comboBonus ,
         mode === 'encrypt' ? 'Encrypted' : 'Decrypted',
         userWithStats
       );
@@ -767,7 +791,7 @@ const CipherLabPage = () => {
             </div>
 
             <div className={`${currentTheme.textMuted} text-xs`}>
-              If the key isn’t invertible (det not coprime with 26), an error appears and inverse shows “Not invertible”.
+              If the key isn't invertible (det not coprime with 26), an error appears and inverse shows "Not invertible".
             </div>
           </div>
         );
@@ -837,6 +861,7 @@ const CipherLabPage = () => {
                   setOutputText('');
                   setEuclidResult('');
                   setShowCrack(false);
+                  setLastProcessed(''); // Reset last processed
                 } else {
                   navigate('/');
                 }
@@ -939,6 +964,7 @@ const CipherLabPage = () => {
                       setMode('encrypt');
                       setInputText('');
                       setOutputText('');
+                      setLastProcessed(''); // Reset on mode change
                     }}
                     className={`flex-1 py-3 px-6 rounded-xl font-bold transition-all shadow-lg ${
                       mode === 'encrypt'
@@ -957,6 +983,7 @@ const CipherLabPage = () => {
                       setMode('decrypt');
                       setInputText('');
                       setOutputText('');
+                      setLastProcessed(''); // Reset on mode change
                     }}
                     className={`flex-1 py-3 px-6 rounded-xl font-bold transition-all shadow-lg ${
                       mode === 'decrypt'
@@ -986,7 +1013,7 @@ const CipherLabPage = () => {
                       value={inputText}
                       onChange={(e) => setInputText(e.target.value)}
                       className={`w-full h-32 ${currentTheme.input} border-2 ${currentTheme.cardBorder} ${currentTheme.inputFocus} rounded-xl px-4 py-3 ${currentTheme.text} placeholder-opacity-30 focus:outline-none resize-none`}
-                      placeholder="Enter your message here..."
+                      placeholder="Enter different text each time to earn points..."
                     />
                   </div>
 

@@ -1,16 +1,10 @@
-import React, { useEffect } from 'react';
+// src/components/ProtectedRoute.js
+import React from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
 
 export const ProtectedRoute = ({ element }) => {
   const { user, loading } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!loading && !user) {
-      navigate('/login');
-    }
-  }, [user, loading, navigate]);
 
   if (loading) {
     return (
@@ -20,5 +14,9 @@ export const ProtectedRoute = ({ element }) => {
     );
   }
 
-  return user ? element : null;
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return element;
 };
