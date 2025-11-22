@@ -8,7 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 
 // ===== API Configuration =====
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
+const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:3000";
 
 // POST JSON helper
 async function postJSON(path, body) {
