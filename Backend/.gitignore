@@ -1,0 +1,49 @@
+# --- Node Modules ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- Environment Variables ---
+.env
+Backend/.env
+.env.local
+.env.*.local
+
+# --- Build output ---
+dist/
+build/
+.tmp/
+
+# --- Logs ---
+logs/
+*.log
+*.log.*
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# --- Coverage reports ---
+coverage/
+
+# --- OS / Editor Junk Files ---
+.DS_Store
+Thumbs.db
+
+# --- IDE ---
+.vscode/
+.idea/
+*.swp
+
+# --- PM2 ---
+.pm2/
+
+# --- Database dumps ---
+dump.rdb
+*.sqlite
+*.db
+*.db-journal
+
+# --- Optional: Uploads folder (if generated at runtime) ---
+uploads/

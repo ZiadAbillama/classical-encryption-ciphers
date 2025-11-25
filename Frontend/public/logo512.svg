@@ -1,0 +1,127 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Background gradient -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f0f9ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e0f2fe;stop-opacity:1" />
+    </linearGradient>
+    <!-- Shield gradients -->
+    <linearGradient id="shieldGradient" x1="256" y1="50" x2="256" y2="462" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:1" />
+      <stop offset="30%" style="stop-color:#0099ff;stop-opacity:1" />
+      <stop offset="70%" style="stop-color:#0066cc;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#003d7a;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="shieldInner" x1="256" y1="90" x2="256" y2="430" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" style="stop-color:#1a5f8f;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#0d3d66;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#002244;stop-opacity:1" />
+    </linearGradient>
+    <!-- Lock gradients -->
+    <linearGradient id="lockGradient" x1="256" y1="210" x2="256" y2="320" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#00b8e6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0099ff;stop-opacity:1" />
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="30%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.9" />
+      <stop offset="50%" style="stop-color:#00d4ff;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#00d4ff;stop-opacity:0" />
+    </radialGradient>
+    <!-- Shine effect -->
+    <linearGradient id="shine" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.4" />
+      <stop offset="50%" style="stop-color:#ffffff;stop-opacity:0.1" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0" />
+    </linearGradient>
+    <!-- Shadow -->
+    <radialGradient id="shadow" cx="50%" cy="50%">
+      <stop offset="0%" style="stop-color:#000000;stop-opacity:0.5" />
+      <stop offset="100%" style="stop-color:#000000;stop-opacity:0" />
+    </radialGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="512" height="512" fill="url(#bgGradient)"/>
+  
+  <!-- Drop shadow for shield -->
+  <ellipse cx="256" cy="400" rx="140" ry="30" fill="url(#shadow)" opacity="0.3"/>
+  
+  <!-- Outer shield with bright cyan edge -->
+  <path d="M256 50 L95 100 L95 225 C95 335 150 420 256 462 C362 420 417 335 417 225 L417 100 Z" 
+        fill="url(#shieldGradient)" 
+        stroke="#00d4ff" 
+        stroke-width="6"/>
+  
+  <!-- Border detail -->
+  <path d="M256 50 L95 100 L95 225 C95 335 150 420 256 462 C362 420 417 335 417 225 L417 100 Z" 
+        fill="none" 
+        stroke="#003d7a" 
+        stroke-width="3" 
+        opacity="0.5"/>
+  
+  <!-- Inner shield darker -->
+  <path d="M256 90 L125 130 L125 225 C125 320 172 395 256 430 C340 395 387 320 387 225 L387 130 Z" 
+        fill="url(#shieldInner)"/>
+  
+  <!-- Center highlight glow -->
+  <ellipse cx="256" cy="170" rx="130" ry="90" fill="url(#glow)" opacity="0.5"/>
+  
+  <!-- Shine overlay on left side of shield -->
+  <path d="M256 90 L125 130 L125 225 C125 320 172 395 256 430 L256 90 Z" 
+        fill="url(#shine)" 
+        opacity="0.25"/>
+  
+  <!-- Lock body shadow -->
+  <rect x="200" y="255" width="112" height="85" rx="18" 
+        fill="#000000" 
+        opacity="0.4" 
+        transform="translate(5, 5)"/>
+  
+  <!-- Lock body -->
+  <rect x="200" y="255" width="112" height="85" rx="18" 
+        fill="url(#lockGradient)" 
+        stroke="#00d4ff" 
+        stroke-width="4"/>
+  
+  <!-- Lock body inner border -->
+  <rect x="205" y="260" width="102" height="75" rx="15" 
+        fill="none" 
+        stroke="#0066cc" 
+        stroke-width="2" 
+        opacity="0.5"/>
+  
+  <!-- Lock shackle outer -->
+  <path d="M220 255 L220 210 C220 183 235.8 165 256 165 C276.2 165 292 183 292 210 L292 255" 
+        fill="none" 
+        stroke="url(#lockGradient)" 
+        stroke-width="16" 
+        stroke-linecap="round"/>
+  
+  <!-- Lock shackle inner detail -->
+  <path d="M228 255 L228 215 C228 190.3 239.6 173 256 173 C272.4 173 284 190.3 284 215 L284 255" 
+        fill="none" 
+        stroke="#001a33" 
+        stroke-width="10" 
+        stroke-linecap="round"/>
+  
+  <!-- Keyhole circle -->
+  <circle cx="256" cy="285" r="14" fill="#002244"/>
+  <circle cx="256" cy="285" r="12" fill="#001a33"/>
+  
+  <!-- Keyhole slot -->
+  <path d="M256 297 L256 315" stroke="#002244" stroke-width="10" stroke-linecap="round"/>
+  <path d="M256 297 L256 315" stroke="#001a33" stroke-width="7" stroke-linecap="round"/>
+  
+  <!-- Lock highlights -->
+  <ellipse cx="235" cy="270" rx="22" ry="12" fill="#ffffff" opacity="0.4"/>
+  <ellipse cx="210" cy="290" rx="15" ry="8" fill="#ffffff" opacity="0.2"/>
+  
+  <!-- Shackle highlights -->
+  <path d="M232 255 L232 220 C232 195 242 180 256 180" 
+        fill="none" 
+        stroke="#ffffff" 
+        stroke-width="4" 
+        stroke-linecap="round" 
+        opacity="0.4"/>
+</svg>

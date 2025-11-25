@@ -1,0 +1,53 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Shield gradients -->
+    <linearGradient id="shieldGradient" x1="32" y1="4" x2="32" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#0099ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#003d7a;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="shieldInner" x1="32" y1="10" x2="32" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" style="stop-color:#1a5f8f;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#002244;stop-opacity:1" />
+    </linearGradient>
+    <!-- Lock gradients -->
+    <linearGradient id="lockGradient" x1="32" y1="24" x2="32" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0099ff;stop-opacity:1" />
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="30%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#00d4ff;stop-opacity:0" />
+    </radialGradient>
+  </defs>
+  
+  <!-- Outer shield with bright cyan edge -->
+  <path d="M32 4 L10 12 L10 28 C10 42 18 54 32 60 C46 54 54 42 54 28 L54 12 Z" 
+        fill="url(#shieldGradient)" 
+        stroke="#00d4ff" 
+        stroke-width="1.5"/>
+  
+  <!-- Inner shield darker -->
+  <path d="M32 8 L14 15 L14 28 C14 40 21 50 32 55 C43 50 50 40 50 28 L50 15 Z" 
+        fill="url(#shieldInner)"/>
+  
+  <!-- Center highlight -->
+  <ellipse cx="32" cy="20" rx="18" ry="12" fill="url(#glow)" opacity="0.4"/>
+  
+  <!-- Lock body -->
+  <rect x="24" y="32" width="16" height="12" rx="3" 
+        fill="url(#lockGradient)" 
+        stroke="#00d4ff" 
+        stroke-width="1"/>
+  
+  <!-- Lock shackle -->
+  <path d="M27 32 L27 28 C27 25.2 29.2 23 32 23 C34.8 23 37 25.2 37 28 L37 32" 
+        fill="none" 
+        stroke="url(#lockGradient)" 
+        stroke-width="2.5" 
+        stroke-linecap="round"/>
+  
+  <!-- Keyhole -->
+  <circle cx="32" cy="37" r="2" fill="#002244"/>
+  <path d="M32 39 L32 41" stroke="#002244" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
