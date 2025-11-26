@@ -61,7 +61,7 @@ const MissionsPage = () => {
   difficulty: "Apprentice",
   type: "decrypt",
   icon: Lock
-}
+},
     {
       id: "affine_crack",
 cipher: "affine",
