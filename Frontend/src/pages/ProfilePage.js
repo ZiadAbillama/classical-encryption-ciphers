@@ -223,6 +223,10 @@ const [showNewPassword, setShowNewPassword] = useState(false);
   };
 
   const handlePasswordChange = async () => {
+  console.log('🔍 Password change attempt');
+  console.log('New password:', passwords.new);
+  console.log('Password strength:', newPasswordStrength);
+  
   // match check
   if (passwords.new !== passwords.confirm) {
     showError('New passwords do not match!');
@@ -236,10 +240,15 @@ const [showNewPassword, setShowNewPassword] = useState(false);
   }
 
   // block weak passwords
+  console.log('Score check:', newPasswordStrength.score, '< 30?', newPasswordStrength.score < 30);
+  
   if (newPasswordStrength.score < 30) {
+    console.log('❌ Password too weak - blocking');
     showError("Your new password is too weak. Please choose a stronger password.");
     return;
   }
+
+  console.log('✅ Password validation passed, proceeding with API call');
 
   // ---- actual update request ----
   try {
@@ -262,6 +271,8 @@ const [showNewPassword, setShowNewPassword] = useState(false);
     showSuccess('Password updated successfully!');
     setPasswords({ current: '', new: '', confirm: '' });
     setShowPassword({ current: false, new: false, confirm: false });
+    setNewPasswordStrength({ score: 0, label: "" }); // ✅ RESET STRENGTH
+    setShowNewPassword(false); // ✅ RESET VISIBILITY
 
   } catch (e) {
     showError(e.message || 'Password update failed');
