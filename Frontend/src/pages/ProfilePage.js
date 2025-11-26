@@ -714,44 +714,43 @@ const [showNewPassword, setShowNewPassword] = useState(false);
   </div>
 
   {/* Strength bar */}
-  {newPasswordStrength.label && (
-    <div className="mt-2">
-
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-xs text-slate-400">Strength</span>
-        <span
-          className={`text-xs font-bold ${
-            newPasswordStrength.score < 30
-              ? "text-red-400"
-              : newPasswordStrength.score < 60
-              ? "text-yellow-400"
-              : newPasswordStrength.score < 80
-              ? "text-blue-400"
-              : "text-green-400"
-          }`}
-        >
-          {newPasswordStrength.label}
-        </span>
-      </div>
-
-      <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
-        <div
-          className="h-full transition-all duration-200"
-          style={{
-            width: `${newPasswordStrength.score}%`,
-            background:
-              newPasswordStrength.score < 30
-                ? "#ef4444"  /* red */
-                : newPasswordStrength.score < 60
-                ? "#facc15" /* yellow */
-                : newPasswordStrength.score < 80
-                ? "#3b82f6" /* blue */
-                : "#22c55e", /* green */
-          }}
-        ></div>
-      </div>
+{newPasswordStrength.label && (
+  <div className="mt-2">
+    <div className="flex items-center justify-between mb-1">
+      <span className="text-xs text-slate-400">Strength</span>
+      <span
+        className={`text-xs font-bold ${
+          newPasswordStrength.score < 30
+            ? "text-red-400"
+            : newPasswordStrength.score < 50
+            ? "text-yellow-400"
+            : newPasswordStrength.score < 70
+            ? "text-blue-400"
+            : "text-green-400"
+        }`}
+      >
+        {newPasswordStrength.label}
+      </span>
     </div>
-  )}
+
+    <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
+      <div
+        className="h-full transition-all duration-200"
+        style={{
+          width: `${newPasswordStrength.score}%`,
+          background:
+            newPasswordStrength.score < 30
+              ? "#ef4444"  /* red - Weak */
+              : newPasswordStrength.score < 50
+              ? "#facc15" /* yellow - Fair */
+              : newPasswordStrength.score < 70
+              ? "#3b82f6" /* blue - Good */
+              : "#22c55e", /* green - Strong */
+        }}
+      ></div>
+    </div>
+  </div>
+)}
 </div>
 
 
