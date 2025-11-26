@@ -223,47 +223,52 @@ const [showNewPassword, setShowNewPassword] = useState(false);
   };
 
   const handlePasswordChange = async () => {
-    if (passwords.new !== passwords.confirm) {
-      showError('New passwords do not match!');
-      return;
-    }
-    if (!passwords.current) {
-      showError('Please enter your current password');
-      return;
-    }
-    
-    if (newPasswordStrength.label === "Weak") {
-      showError("Your new password is too weak. Please choose a stronger one.");
-      return;
-    }
+  // match check
+  if (passwords.new !== passwords.confirm) {
+    showError('New passwords do not match!');
+    return;
+  }
 
+  // require current password
+  if (!passwords.current) {
+    showError('Please enter your current password');
+    return;
+  }
 
-    try {
-      setBusy(true);
-      const res = await fetch(`${API_BASE}/api/auth/password`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          ...authHeaders(),
-        },
-        body: JSON.stringify({
-          currentPassword: passwords.current,
-          newPassword: passwords.new,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || `Password update failed (${res.status})`);
+  // block weak passwords
+  if (newPasswordStrength.score < 30) {
+    showError("Your new password is too weak. Please choose a stronger password.");
+    return;
+  }
 
-      showSuccess('Password updated successfully!');
-      setPasswords({ current: '', new: '', confirm: '' });
-      setShowPassword({ current: false, new: false, confirm: false });
-    } catch (e) {
-      showError(e.message || 'Password update failed');
-    } finally {
-      setBusy(false);
-    }
-  };
+  // ---- actual update request ----
+  try {
+    setBusy(true);
+    const res = await fetch(`${API_BASE}/api/auth/password`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders(),
+      },
+      body: JSON.stringify({
+        currentPassword: passwords.current,
+        newPassword: passwords.new,
+      }),
+    });
 
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error || `Password update failed (${res.status})`);
+
+    showSuccess('Password updated successfully!');
+    setPasswords({ current: '', new: '', confirm: '' });
+    setShowPassword({ current: false, new: false, confirm: false });
+
+  } catch (e) {
+    showError(e.message || 'Password update failed');
+  } finally {
+    setBusy(false);
+  }
+};
   const handleDeleteAccount = async () => {
     try {
       setBusy(true);
