@@ -66,7 +66,7 @@ const MissionAttemptPage = () => {
       description: "Encrypt 'CRYPTO' with keyword 'KEY'",
       plaintext: "CRYPTO",
       key: "KEY",
-      target: "MVWZXS",
+      target: "MVWZXM",
       points: 30,
       difficulty: "Apprentice",
       type: "encrypt",
