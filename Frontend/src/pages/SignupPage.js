@@ -258,8 +258,8 @@ const SignupPage = () => {
                     <span className="text-xs text-slate-400">Strength</span>
                     <span className={`text-xs font-bold ${
                       passwordStrength.score < 30 ? "text-red-400" :
-                      passwordStrength.score < 60 ? "text-yellow-400" :
-                      passwordStrength.score < 80 ? "text-blue-400" :
+                      passwordStrength.score < 50 ? "text-yellow-400" :
+                      passwordStrength.score < 70 ? "text-blue-400" :
                       "text-green-400"
                     }`}>
                       {passwordStrength.label}
