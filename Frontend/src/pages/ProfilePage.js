@@ -243,13 +243,9 @@ const [showNewPassword, setShowNewPassword] = useState(false);
   console.log('Score check:', newPasswordStrength.score, '< 30?', newPasswordStrength.score < 30);
   
   if (newPasswordStrength.score < 30) {
-    console.log('❌ Password too weak - blocking');
     showError("Your new password is too weak. Please choose a stronger password.");
     return;
   }
-
-  console.log('✅ Password validation passed, proceeding with API call');
-
   // ---- actual update request ----
   try {
     setBusy(true);
