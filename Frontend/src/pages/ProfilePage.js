@@ -25,25 +25,27 @@ function authHeaders() {
   const t = localStorage.getItem('auth_token');
   return t ? { Authorization: `Bearer ${t}` } : {};
 }
-// ⭐ Password Strength Calculator (same as Signup)
+
 const getPasswordStrength = (password) => {
   let score = 0;
 
-  // LENGTH (max 50)
-  score += Math.min(password.length * 5, 50);
+  // LENGTH (more weight on length)
+  if (password.length >= 8) score += 20;
+  if (password.length >= 10) score += 10;
+  if (password.length >= 12) score += 15;
+  if (password.length >= 14) score += 15;
+  if (password.length >= 16) score += 10;
 
   // CHARACTER REQUIREMENTS
+  const hasLower = /[a-z]/.test(password);
   const hasUpper = /[A-Z]/.test(password);
   const hasNumber = /[0-9]/.test(password);
   const hasSymbol = /[!@#$%^&*(),.?":{}|<>_\-]/.test(password);
 
-  if (hasUpper) score += 15;
-  if (hasNumber) score += 15;
-  if (hasSymbol) score += 20;
-
-  // LENGTH BONUSES
-  if (password.length >= 12) score += 10;
-  if (password.length >= 18) score += 10;
+  if (hasLower) score += 5;
+  if (hasUpper) score += 10;
+  if (hasNumber) score += 10;
+  if (hasSymbol) score += 15;
 
   // Cap at 100
   score = Math.min(score, 100);
@@ -51,10 +53,9 @@ const getPasswordStrength = (password) => {
   // LABELS
   let label = "";
   if (score < 30) label = "Weak";
-  else if (score < 60) label = "Fair";
-  else if (score < 80) label = "Good";
+  else if (score < 50) label = "Fair";
+  else if (score < 70) label = "Good";
   else label = "Strong";
-
   return { score, label };
 };
 
