@@ -49,19 +49,19 @@ const MissionsPage = () => {
       type: "encrypt",
       icon: Key
     },
-    {
-      id: "affine_decrypt",
-      cipher: "affine",
-      title: "Reverse Engineer",
-      description: "Decrypt 'IHHW' with a=5, b=8",
-      ciphertext: "IHHW",
-      key: { a: 5, b: 8 },
-      target: "MEET",
-      points: 25,
-      difficulty: "Apprentice",
-      type: "decrypt",
-      icon: Lock
-    },
+   {
+  id: "affine_decrypt",
+  cipher: "affine",
+  title: "Reverse Engineer",
+  description: "Decrypt 'QCCZ' with a=5, b=8",
+  ciphertext: "QCCZ",
+  key: { a: 5, b: 8 },
+  target: "MEET",
+  points: 25,
+  difficulty: "Apprentice",
+  type: "decrypt",
+  icon: Lock
+}
     {
       id: "affine_crack",
       cipher: "affine",
