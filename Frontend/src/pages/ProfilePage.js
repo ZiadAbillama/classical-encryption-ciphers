@@ -231,6 +231,12 @@ const [showNewPassword, setShowNewPassword] = useState(false);
       showError('Please enter your current password');
       return;
     }
+    
+    if (newPasswordStrength.label === "Weak") {
+      showError("Your new password is too weak. Please choose a stronger one.");
+      return;
+    }
+
 
     try {
       setBusy(true);
