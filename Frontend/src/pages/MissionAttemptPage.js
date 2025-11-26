@@ -97,29 +97,29 @@ const MissionAttemptPage = () => {
   icon: Sparkles
 },
     "vigenere_decrypt": {
-      cipher: "vigenere",
-      title: "Key Finder",
-      description: "Decrypt 'JSXWI' with keyword 'CODE'",
-      ciphertext: "JSXWI",
-      key: "CODE",
-      target: "HELLO",
-      points: 35,
-      difficulty: "Apprentice",
-      type: "decrypt",
-      icon: Key
-    },
-    "playfair_encrypt": {
-      cipher: "playfair",
-      title: "Digraph Master",
-      description: "Encrypt 'HELLO' using Playfair cipher with keyword 'MONARCHY'",
-      plaintext: "HELLO",
-      key: "MONARCHY",
-      target: "GATLMZ",
-      points: 40,
-      difficulty: "Advanced",
-      type: "encrypt",
-      icon: Grid3x3
-    }
+  cipher: "vigenere",
+  title: "Key Finder",
+  description: "Decrypt 'JSOPQ' with keyword 'CODE'",
+  ciphertext: "JSOPQ",
+  key: "CODE",
+  target: "HELLO",
+  points: 35,
+  difficulty: "Apprentice",
+  type: "decrypt",
+  icon: Key
+},
+"playfair_encrypt": {
+  cipher: "playfair",
+  title: "Digraph Master",
+  description: "Encrypt 'HELLO' using Playfair cipher with keyword 'MONARCHY'",
+  plaintext: "HELLO",
+  key: "MONARCHY",
+  target: "CFSUPM",
+  points: 40,
+  difficulty: "Advanced",
+  type: "encrypt",
+  icon: Grid3x3
+}
   };
 
   const activeMission = missionId ? missionMeta[missionId] : null;
