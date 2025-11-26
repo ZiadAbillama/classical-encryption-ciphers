@@ -16,7 +16,7 @@ import pdfjsWorker from 'pdfjs-dist/legacy/build/pdf.worker.entry';
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 //API Configuration
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:3000";
+const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:3000";
 
 // POST JSON helper
 async function postJSON(path, body) {
