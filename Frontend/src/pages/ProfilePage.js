@@ -243,7 +243,7 @@ const [showNewPassword, setShowNewPassword] = useState(false);
   // block weak passwords
   console.log('Score check:', newPasswordStrength.score, '< 30?', newPasswordStrength.score < 30);
   
-  if (newPasswordStrength.score < 30) {
+  if (newPasswordStrength.score < 50) {
     showError("Your new password is too weak. Please choose a stronger password.");
     return;
   }
