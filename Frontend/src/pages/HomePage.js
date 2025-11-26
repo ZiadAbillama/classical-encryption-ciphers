@@ -425,7 +425,7 @@ const HomePage = () => {
               </div>
               <div>
                 <h3 className={`text-xl font-bold ${currentTheme.text}`}>
-                  📚 Cipher Encyclopedia
+                   Cipher Encyclopedia
                 </h3>
                 <p className={`${currentTheme.textMuted} text-sm`}>
                   Learn the theory behind each cipher with step-by-step explanations, examples, and mathematical foundations

@@ -226,12 +226,32 @@ const CipherLabPage = () => {
         // Read text file directly
         extractedText = await file.text();
       } else if (fileExtension === '.doc' || fileExtension === '.docx') {
-        // Extract text from Word document
+        // Extract text from Word document with formatting
         const arrayBuffer = await file.arrayBuffer();
-        const result = await mammoth.extractRawText({ arrayBuffer });
-        extractedText = result.value;
+        // Use convertToHtml to better preserve structure, then convert to text
+        const result = await mammoth.convertToHtml({ arrayBuffer });
+        // Convert HTML to text while preserving paragraph breaks
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = result.value;
+        
+        // Manually process HTML to preserve line breaks
+        let processedText = result.value
+          .replace(/<\/p>/gi, '\n')           // Paragraph ends become newlines
+          .replace(/<br\s*\/?>/gi, '\n')      // Line breaks become newlines
+          .replace(/<\/div>/gi, '\n')         // Div ends become newlines
+          .replace(/<\/li>/gi, '\n')          // List items become newlines
+          .replace(/<[^>]+>/g, '')            // Remove all other HTML tags
+          .replace(/&nbsp;/g, ' ')            // Replace non-breaking spaces
+          .replace(/&amp;/g, '&')             // Decode ampersands
+          .replace(/&lt;/g, '<')              // Decode less than
+          .replace(/&gt;/g, '>')              // Decode greater than
+          .replace(/&quot;/g, '"')            // Decode quotes
+          .replace(/\n\n+/g, '\n\n')          // Replace multiple newlines with double newline
+          .trim();
+        
+        extractedText = processedText;
       } else if (fileExtension === '.pdf') {
-        // Extract text from PDF
+        // Extract text from PDF with preserved formatting
         try {
           const arrayBuffer = await file.arrayBuffer();
           const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
@@ -241,8 +261,26 @@ const CipherLabPage = () => {
           for (let i = 1; i <= pdf.numPages; i++) {
             const page = await pdf.getPage(i);
             const textContent = await page.getTextContent();
-            const pageText = textContent.items.map(item => item.str).join(' ');
-            fullText += pageText + '\n';
+            
+            // Build text by respecting the hasEOL property from PDF.js
+            let pageText = '';
+            
+            for (let idx = 0; idx < textContent.items.length; idx++) {
+              const item = textContent.items[idx];
+              pageText += item.str;
+              
+              // Check if this item ends a line
+              if (item.hasEOL) {
+                pageText += '\n';
+              }
+            }
+            
+            fullText += pageText;
+            
+            // Add page separator
+            if (i < pdf.numPages) {
+              fullText += '\n\n';
+            }
           }
           
           extractedText = fullText.trim();
@@ -1368,7 +1406,7 @@ const newStats = {
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                           <FileText className={`w-8 h-8 mb-2 ${currentTheme.textMuted}`} />
                           <p className={`text-sm ${currentTheme.textMuted}`}>
-                            <span className="font-bold">Click to upload</span> or drag and drop
+                            <span className="font-bold">Click to upload</span> 
                           </p>
                           <p className={`text-xs ${currentTheme.textMuted}`}>
                             TXT, DOC, DOCX, or PDF files
