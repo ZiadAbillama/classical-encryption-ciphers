@@ -265,17 +265,17 @@ const SignupPage = () => {
                       {passwordStrength.label}
                     </span>
                   </div>
-
+              
                   <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
                     <div
                       className="h-full transition-all duration-200"
                       style={{
                         width: `${passwordStrength.score}%`,
                         background:
-                          passwordStrength.score < 30 ? "#ef4444" :
-                          passwordStrength.score < 60 ? "#facc15" :
-                          passwordStrength.score < 80 ? "#3b82f6" :
-                          "#22c55e"
+                          passwordStrength.score < 30 ? "#ef4444" :   // Red (Weak)
+                          passwordStrength.score < 50 ? "#facc15" :   // Yellow (Fair)
+                          passwordStrength.score < 70 ? "#3b82f6" :   // Blue (Good)
+                          "#22c55e"                                    // Green (Strong)
                       }}
                     ></div>
                   </div>
