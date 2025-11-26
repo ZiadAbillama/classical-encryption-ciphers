@@ -95,7 +95,7 @@ const MissionAttemptPage = () => {
   difficulty: "Expert",
   type: "crack",
   icon: Sparkles
-}
+},
     "vigenere_decrypt": {
       cipher: "vigenere",
       title: "Key Finder",
