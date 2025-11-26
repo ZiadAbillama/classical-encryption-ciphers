@@ -85,17 +85,17 @@ const MissionAttemptPage = () => {
       icon: Lock
     },
     "affine_crack": {
-      cipher: "affine",
-      title: "Code Breaker",
-      description: "Crack this affine cipher (hint: 'E' encrypts to 'I', 'T' encrypts to 'X'). Decrypt: 'IDRR'",
-      ciphertext: "IDRR",
-      hint: "Most common letters: E→I, T→X. This means a=5, b=4",
-      target: "MEET",
-      points: 50,
-      difficulty: "Expert",
-      type: "crack",
-      icon: Sparkles
-    },
+  cipher: "affine",
+  title: "Code Breaker",
+  description: "Crack this affine cipher (hint: 'E' encrypts to 'A', 'T' encrypts to 'D'). Decrypt: 'MAAD'",
+  ciphertext: "MAAD",
+  hint: "Most common letters: E→A, T→D. Find a and b values!",
+  target: "MEET",
+  points: 50,
+  difficulty: "Expert",
+  type: "crack",
+  icon: Sparkles
+}
     "vigenere_decrypt": {
       cipher: "vigenere",
       title: "Key Finder",
