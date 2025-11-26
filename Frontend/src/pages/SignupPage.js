@@ -78,7 +78,7 @@ const SignupPage = () => {
     }
 
     // BLOCK WEAK PASSWORD ONLY
-    if (passwordStrength.score < 30) {
+    if (passwordStrength.score < 50) {
       setError('Password is too weak.');
       return;
     }
