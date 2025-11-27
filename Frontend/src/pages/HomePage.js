@@ -459,7 +459,7 @@ const HomePage = () => {
     </div>
     <div>
       <h4 className={`font-bold ${currentTheme.text} text-sm mb-1`}>
-         Important Note
+        Important Note
       </h4>
       <p className={`${currentTheme.textMuted} text-sm`}>
         This platform encrypts <span className="font-semibold">letters only (A-Z)</span>. Numbers, symbols, and special characters are not supported by classical ciphers and will be ignored.
