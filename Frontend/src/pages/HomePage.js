@@ -441,6 +441,35 @@ const HomePage = () => {
             </div>
           </div>
         </div>
+        {/* Character Limitation Notice - Add this right after the "Learn Ciphers Banner" and before the STATS GRID */}
+<div 
+  className={`${currentTheme.card} backdrop-blur-xl border-2 ${
+    theme === 'dark' 
+      ? 'border-amber-500/50 bg-amber-500/10' 
+      : 'border-amber-400 bg-amber-50'
+  } rounded-2xl p-4 mb-8 shadow-lg`}
+>
+  <div className="flex items-start space-x-3">
+    <div className={`flex-shrink-0 w-6 h-6 rounded-full ${
+      theme === 'dark' 
+        ? 'bg-amber-500' 
+        : 'bg-amber-400'
+    } flex items-center justify-center text-white font-bold text-sm`}>
+      ℹ
+    </div>
+    <div>
+      <h4 className={`font-bold ${currentTheme.text} text-sm mb-1`}>
+        📝 Important Note
+      </h4>
+      <p className={`${currentTheme.textMuted} text-sm`}>
+        This platform encrypts <span className="font-semibold">letters only (A-Z)</span>. Numbers, symbols, and special characters are not supported by classical ciphers and will be ignored or cause errors.
+      </p>
+    </div>
+  </div>
+</div>
+
+{/* STATS GRID */}
+<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
 
         {/* STATS GRID */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
