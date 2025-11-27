@@ -441,7 +441,7 @@ const HomePage = () => {
             </div>
           </div>
         </div>
-        {/* Character Limitation Notice - Add this right after the "Learn Ciphers Banner" and before the STATS GRID */}
+        
 <div 
   className={`${currentTheme.card} backdrop-blur-xl border-2 ${
     theme === 'dark' 
@@ -459,10 +459,10 @@ const HomePage = () => {
     </div>
     <div>
       <h4 className={`font-bold ${currentTheme.text} text-sm mb-1`}>
-        📝 Important Note
+         Important Note
       </h4>
       <p className={`${currentTheme.textMuted} text-sm`}>
-        This platform encrypts <span className="font-semibold">letters only (A-Z)</span>. Numbers, symbols, and special characters are not supported by classical ciphers and will be ignored or cause errors.
+        This platform encrypts <span className="font-semibold">letters only (A-Z)</span>. Numbers, symbols, and special characters are not supported by classical ciphers and will be ignored.
       </p>
     </div>
   </div>
