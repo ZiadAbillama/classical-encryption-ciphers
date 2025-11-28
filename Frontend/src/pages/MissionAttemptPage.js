@@ -119,6 +119,30 @@ const MissionAttemptPage = () => {
   difficulty: "Advanced",
   type: "encrypt",
   icon: Grid3x3
+},
+"playfair_decrypt": {
+  cipher: "playfair",
+  title: "Digraph Decoder",
+  description: "Decrypt 'CFSUPM' using Playfair cipher with keyword 'MONARCHY'",
+  ciphertext: "CFSUPM",
+  key: "MONARCHY",
+  target: "HELXLO",
+  points: 45,
+  difficulty: "Advanced",
+  type: "decrypt",
+  icon: Grid3x3
+},
+"monoalphabetic_decrypt": {
+  cipher: "monoalphabetic",
+  title: "Substitution Solver",
+  description: "Decrypt message using monoalphabetic cipher with key 'QWERTYUIOPASDFGHJKLZXCVBNM'",
+  ciphertext: "ITSSG",
+  key: "QWERTYUIOPASDFGHJKLZXCVBNM",
+  target: "HELLO",
+  points: 50,
+  difficulty: "Advanced",
+  type: "decrypt",
+  icon: Sparkles
 }
   };
 
