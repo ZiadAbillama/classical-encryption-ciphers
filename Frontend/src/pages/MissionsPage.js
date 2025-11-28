@@ -34,7 +34,8 @@ const MissionsPage = () => {
       points: 20,
       difficulty: "Novice",
       type: "encrypt",
-      icon: Star
+      icon: Star,
+      requiredLevel: 1
     },
     {
       id: "vigenere_encrypt",
@@ -47,59 +48,92 @@ const MissionsPage = () => {
       points: 30,
       difficulty: "Apprentice",
       type: "encrypt",
-      icon: Key
-    },
-   {
-  id: "affine_decrypt",
-  cipher: "affine",
-  title: "Reverse Engineer",
-  description: "Decrypt 'QCCZ' with a=5, b=8",
-  ciphertext: "QCCZ",
-  key: { a: 5, b: 8 },
-  target: "MEET",
-  points: 25,
-  difficulty: "Apprentice",
-  type: "decrypt",
-  icon: Lock
-},
-    {
-      id: "affine_crack",
-cipher: "affine",
-title: "Code Breaker",
-description: "Crack this affine cipher (hint: 'E' encrypts to 'A', 'T' encrypts to 'D'). Decrypt: 'MAAD'",
-ciphertext: "MAAD",
-hint: "Most common letters: E→A, T→D. Find a and b values!",
-target: "MEET",
-points: 50,
-difficulty: "Expert",
-type: "crack",
-icon: Sparkles
+      icon: Key,
+      requiredLevel: 2
     },
     {
-  id: "vigenere_decrypt",
-  cipher: "vigenere",
-  title: "Key Finder",
-  description: "Decrypt 'JSOPQ' with keyword 'CODE'",
-  ciphertext: "JSOPQ",
-  key: "CODE",
-  target: "HELLO",
-  points: 35,
-  difficulty: "Apprentice",
-  type: "decrypt",
-  icon: Key
-},
+      id: "affine_decrypt",
+      cipher: "affine",
+      title: "Reverse Engineer",
+      description: "Decrypt 'QCCZ' with a=5, b=8",
+      ciphertext: "QCCZ",
+      key: { a: 5, b: 8 },
+      target: "MEET",
+      points: 25,
+      difficulty: "Apprentice",
+      type: "decrypt",
+      icon: Lock,
+      requiredLevel: 2
+    },
+    {
+      id: "vigenere_decrypt",
+      cipher: "vigenere",
+      title: "Key Finder",
+      description: "Decrypt 'JSOPQ' with keyword 'CODE'",
+      ciphertext: "JSOPQ",
+      key: "CODE",
+      target: "HELLO",
+      points: 35,
+      difficulty: "Apprentice",
+      type: "decrypt",
+      icon: Key,
+      requiredLevel: 3
+    },
     {
       id: "playfair_encrypt",
-  cipher: "playfair",
-  title: "Digraph Master",
-  description: "Encrypt 'HELLO' using Playfair cipher with keyword 'MONARCHY'",
-  plaintext: "HELLO",
-  key: "MONARCHY",
-  target: "CFSUPM",
-  points: 40,
-  difficulty: "Advanced",
-  type: "encrypt",
-  icon: Grid3x3
+      cipher: "playfair",
+      title: "Digraph Master",
+      description: "Encrypt 'HELLO' using Playfair cipher with keyword 'MONARCHY'",
+      plaintext: "HELLO",
+      key: "MONARCHY",
+      target: "CFSUPM",
+      points: 40,
+      difficulty: "Advanced",
+      type: "encrypt",
+      icon: Grid3x3,
+      requiredLevel: 3
+    },
+    {
+      id: "playfair_decrypt",
+      cipher: "playfair",
+      title: "Digraph Decoder",
+      description: "Decrypt 'CFSUPM' using Playfair cipher with keyword 'MONARCHY'",
+      ciphertext: "CFSUPM",
+      key: "MONARCHY",
+      target: "HELXLO",
+      points: 45,
+      difficulty: "Advanced",
+      type: "decrypt",
+      icon: Grid3x3,
+      requiredLevel: 4
+    },
+    {
+      id: "monoalphabetic_decrypt",
+      cipher: "monoalphabetic",
+      title: "Substitution Solver",
+      description: "Decrypt message using monoalphabetic cipher with key 'QWERTYUIOPASDFGHJKLZXCVBNM'",
+      ciphertext: "ITSSG",
+      key: "QWERTYUIOPASDFGHJKLZXCVBNM",
+      target: "HELLO",
+      points: 50,
+      difficulty: "Advanced",
+      type: "decrypt",
+      icon: Sparkles,
+      requiredLevel: 4
+    },
+    {
+      id: "affine_crack",
+      cipher: "affine",
+      title: "Code Breaker",
+      description: "Crack this affine cipher (hint: 'E' encrypts to 'A', 'T' encrypts to 'D'). Decrypt: 'MAAD'",
+      ciphertext: "MAAD",
+      hint: "Most common letters: E→A, T→D. Find a and b values!",
+      target: "MEET",
+      points: 50,
+      difficulty: "Expert",
+      type: "crack",
+      icon: Sparkles,
+      requiredLevel: 5
     }
   ];
 
@@ -247,16 +281,26 @@ icon: Sparkles
             const isCompleted = user.stats.completedChallenges?.includes(
               mission.id
             );
+            const userLevel = user.stats?.level || 1;
+            const isLocked = userLevel < mission.requiredLevel;
             const Icon = mission.icon;
 
             return (
               <div
                 key={mission.id}
-                className={`relative backdrop-blur-xl border-2 rounded-2xl p-6 transition-all hover:scale-105 shadow-lg cursor-pointer ${
+                className={`relative backdrop-blur-xl border-2 rounded-2xl p-6 transition-all duration-300 ${
+                  isLocked
+                    ? 'opacity-50 cursor-not-allowed'
+                    : 'hover:scale-105 shadow-lg cursor-pointer'
+                } ${
                   isCompleted
                     ? theme === 'dark'
                       ? 'bg-green-500/10 border-green-500/50'
                       : 'bg-green-50 border-green-300'
+                    : isLocked
+                    ? theme === 'dark'
+                      ? 'bg-slate-800/50 border-slate-600/50'
+                      : 'bg-slate-100 border-slate-300'
                     : `${currentTheme.card} ${currentTheme.cardBorder}`
                 }`}
               >
@@ -278,6 +322,24 @@ icon: Sparkles
                   </div>
                 )}
 
+                {isLocked && (
+                  <div className="absolute -top-3 -right-3">
+                    <div
+                      className={`${
+                        theme === 'dark'
+                          ? 'bg-gradient-to-r from-slate-600 to-slate-700'
+                          : 'bg-gradient-to-r from-slate-400 to-slate-500'
+                      } rounded-full p-2 border-4 ${
+                        theme === 'dark'
+                          ? 'border-slate-900'
+                          : 'border-white'
+                      } shadow-xl`}
+                    >
+                      <Lock className="w-6 h-6 text-white" />
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex items-start space-x-4 mb-4">
                   <div
                     className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-lg ${
@@ -285,6 +347,10 @@ icon: Sparkles
                         ? theme === 'dark'
                           ? 'bg-green-600'
                           : 'bg-green-500'
+                        : isLocked
+                        ? theme === 'dark'
+                          ? 'bg-slate-700'
+                          : 'bg-slate-400'
                         : theme === 'dark'
                         ? 'bg-purple-600'
                         : 'bg-slate-600'
@@ -293,10 +359,22 @@ icon: Sparkles
                     <Icon className="w-6 h-6 text-white" />
                   </div>
                   <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-1">
+                    <div className="flex items-center space-x-2 mb-1 flex-wrap">
                       <h3 className={`text-xl font-bold ${currentTheme.text}`}>
                         {mission.title}
                       </h3>
+                      {isLocked && (
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                            theme === 'dark'
+                              ? 'bg-slate-600/40 text-slate-300'
+                              : 'bg-slate-200 text-slate-700'
+                          }`}
+                        >
+                          <Lock className="w-3 h-3" />
+                          Level {mission.requiredLevel}
+                        </span>
+                      )}
                       <span
                         className={`text-xs px-2 py-0.5 rounded-full ${
                           mission.difficulty === 'Novice'
@@ -342,7 +420,18 @@ icon: Sparkles
                       {mission.points} pts
                     </span>
                   </div>
-                  {!isCompleted && (
+                  {isLocked ? (
+                    <div
+                      className={`px-4 py-2 rounded-xl font-bold flex items-center gap-2 ${
+                        theme === 'dark'
+                          ? 'bg-slate-700/80 text-slate-300 border border-slate-600'
+                          : 'bg-slate-200 text-slate-700 border border-slate-300'
+                      }`}
+                    >
+                      <Lock className="w-4 h-4" />
+                      Reach Level {mission.requiredLevel}
+                    </div>
+                  ) : !isCompleted ? (
                     <button
                       onClick={() => handleMissionClick(mission.id)}
                       className={`px-4 py-2 rounded-xl font-bold transition-all shadow-lg ${
@@ -353,8 +442,7 @@ icon: Sparkles
                     >
                       Attempt Mission
                     </button>
-                  )}
-                  {isCompleted && (
+                  ) : (
                     <button
                       onClick={() => handleMissionClick(mission.id)}
                       className={`px-4 py-2 rounded-xl font-bold transition-all ${

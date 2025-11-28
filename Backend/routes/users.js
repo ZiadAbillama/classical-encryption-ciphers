@@ -101,4 +101,106 @@ router.delete('/me', requireAuth, async (req, res) => {
   }
 });
 
+/* -------------------------------------------
+   GET /api/users/leaderboard
+   Returns all users ranked by points
+--------------------------------------------*/
+router.get('/leaderboard', async (req, res) => {
+  try {
+    const users = await User.find({})
+      .select('name email avatarUrl stats createdAt')
+      .sort({ 'stats.points': -1 })
+      .limit(100);
+
+    const leaderboard = users.map((user, index) => ({
+      rank: index + 1,
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      avatar: user.avatarUrl || null,
+      points: user.stats?.points || 0,
+      level: user.stats?.level || 1,
+      missionsCompleted: user.stats?.completedChallenges?.length || 0,
+      bestCombo: user.stats?.bestCombo || 0,
+      achievementsUnlocked: calculateAchievements(user.stats),
+      joinDate: user.createdAt
+    }));
+
+    res.json({ leaderboard });
+  } catch (err) {
+    console.error("GET /leaderboard error:", err);
+    res.status(500).json({ error: "Failed to load leaderboard" });
+  }
+});
+
+/* -------------------------------------------
+   GET /api/users/leaderboard/rank/:userId
+   Returns a specific user's rank and nearby players
+--------------------------------------------*/
+router.get('/leaderboard/rank/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Get all users sorted by points
+    const users = await User.find({})
+      .select('name email avatarUrl stats createdAt')
+      .sort({ 'stats.points': -1 });
+
+    // Find user's position
+    const userIndex = users.findIndex(u => u.id === userId);
+    if (userIndex === -1) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const userRank = userIndex + 1;
+    const totalUsers = users.length;
+
+    // Get users around this player (5 above, 5 below)
+    const start = Math.max(0, userIndex - 5);
+    const end = Math.min(users.length, userIndex + 6);
+    const nearbyUsers = users.slice(start, end);
+
+    const nearby = nearbyUsers.map((user, idx) => ({
+      rank: start + idx + 1,
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      avatar: user.avatarUrl || null,
+      points: user.stats?.points || 0,
+      level: user.stats?.level || 1,
+      missionsCompleted: user.stats?.completedChallenges?.length || 0,
+      bestCombo: user.stats?.bestCombo || 0,
+      achievementsUnlocked: calculateAchievements(user.stats),
+      isCurrentUser: user.id === userId
+    }));
+
+    res.json({
+      userRank,
+      totalUsers,
+      nearby
+    });
+  } catch (err) {
+    console.error("GET /leaderboard/rank error:", err);
+    res.status(500).json({ error: "Failed to load rank" });
+  }
+});
+
+// Helper function to calculate achievements
+function calculateAchievements(stats) {
+  if (!stats) return 0;
+  
+  const totalEncryptions = stats.totalEncryptions || 0;
+  const totalDecryptions = stats.totalDecryptions || 0;
+  const bestCombo = stats.bestCombo || 0;
+  const level = stats.level || 1;
+  
+  let count = 0;
+  if (totalEncryptions + totalDecryptions > 0) count++;
+  if (bestCombo >= 5) count++;
+  if (totalEncryptions >= 5 && totalDecryptions >= 5) count++;
+  if (level >= 5) count++;
+  
+  return count;
+}
+
 export default router;

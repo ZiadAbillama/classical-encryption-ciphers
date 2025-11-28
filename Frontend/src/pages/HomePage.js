@@ -10,7 +10,8 @@ import {
   Trophy,
   Sun,
   Moon,
-  BookOpen
+  BookOpen,
+  TrendingUp
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -29,6 +30,7 @@ const HomePage = () => {
   const { theme, currentTheme, toggleTheme } = useTheme(); 
   const navigate = useNavigate();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [topPlayers, setTopPlayers] = useState([]);
 
   // FETCH FRESH USER DATA ON PAGE LOAD (same as ProfilePage)
   useEffect(() => {
@@ -60,8 +62,21 @@ const HomePage = () => {
       }
     };
 
+    const fetchLeaderboard = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/users/leaderboard`);
+        const data = await res.json();
+        if (res.ok) {
+          setTopPlayers(data.leaderboard.slice(0, 3));
+        }
+      } catch (err) {
+        console.error("Leaderboard fetch failed:", err);
+      }
+    };
+
     if (user) {
       fetchFresh();
+      fetchLeaderboard();
     }
   }, []); 
 
@@ -407,10 +422,41 @@ const HomePage = () => {
           </button>
         </div>
 
+        {/* Important Note Banner */}
+        <div 
+          className={`border-2 rounded-2xl p-4 mb-8 shadow-lg ${
+            theme === 'dark' 
+              ? 'bg-amber-900/20 border-amber-600/60' 
+              : 'bg-amber-50 border-amber-500'
+          }`}
+        >
+          <div className="flex items-start space-x-3">
+            <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center font-bold text-base ${
+              theme === 'dark' 
+                ? 'bg-amber-500 text-amber-900' 
+                : 'bg-amber-600 text-amber-50'
+            }`}>
+              !
+            </div>
+            <div>
+              <h4 className={`font-bold text-sm mb-1 ${
+                theme === 'dark' ? 'text-amber-400' : 'text-amber-900'
+              }`}>
+                Important Note
+              </h4>
+              <p className={`text-sm ${
+                theme === 'dark' ? 'text-amber-300/90' : 'text-amber-900'
+              }`}>
+                This platform encrypts <span className="font-semibold">letters only (A-Z)</span>. Numbers, symbols, and special characters are not supported by classical ciphers and will be ignored.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Learn Ciphers Banner */}
         <div 
           onClick={() => navigate('/cipher-info')}
-          className={`group relative ${currentTheme.card} backdrop-blur-xl border ${currentTheme.cardBorder} rounded-2xl p-6 mb-16 hover:scale-[1.02] transition-all duration-300 shadow-lg cursor-pointer ${currentTheme.cardHover || ''}`}
+          className={`group relative ${currentTheme.card} backdrop-blur-xl border ${currentTheme.cardBorder} rounded-2xl p-6 mb-8 hover:scale-[1.02] transition-all duration-300 shadow-lg cursor-pointer ${currentTheme.cardHover || ''}`}
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -442,43 +488,205 @@ const HomePage = () => {
           </div>
         </div>
 
-        {/* STATS GRID */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard
-            theme={theme}
-            currentTheme={currentTheme}
-            label="Encryptions"
-            value={stats.totalEncryptions}
-            colorFrom="from-cyan-400"
-            colorTo="to-blue-400"
-          />
+        {/* YOUR PROGRESS SECTION */}
+        <div className="mb-8">
+          <div className="flex items-center space-x-3 mb-6">
+            <div
+              className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                theme === 'dark'
+                  ? 'bg-gradient-to-br from-cyan-600 to-blue-700'
+                  : 'bg-gradient-to-br from-cyan-500 to-blue-600'
+              }`}
+            >
+              <Award className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h3 className={`text-2xl font-bold ${currentTheme.text}`}>
+                Your Progress
+              </h3>
+              <p className={`${currentTheme.textMuted} text-sm`}>
+                Track your crypto mastery journey
+              </p>
+            </div>
+          </div>
 
-          <StatCard
-            theme={theme}
-            currentTheme={currentTheme}
-            label="Decryptions"
-            value={stats.totalDecryptions}
-            colorFrom="from-purple-400"
-            colorTo="to-pink-400"
-          />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
+            <StatCard
+              theme={theme}
+              currentTheme={currentTheme}
+              label="Encryptions"
+              value={stats.totalEncryptions}
+              colorFrom="from-cyan-400"
+              colorTo="to-blue-400"
+            />
 
-          <StatCard
-            theme={theme}
-            currentTheme={currentTheme}
-            label="Missions"
-            value={missionsCompleted}
-            colorFrom="from-green-400"
-            colorTo="to-teal-400"
-          />
+            <StatCard
+              theme={theme}
+              currentTheme={currentTheme}
+              label="Decryptions"
+              value={stats.totalDecryptions}
+              colorFrom="from-purple-400"
+              colorTo="to-pink-400"
+            />
 
-          <StatCard
-            theme={theme}
-            currentTheme={currentTheme}
-            label="Achievements"
-            value={achievementsUnlocked}
-            colorFrom="from-amber-400"
-            colorTo="to-orange-400"
-          />
+            <StatCard
+              theme={theme}
+              currentTheme={currentTheme}
+              label="Missions"
+              value={missionsCompleted}
+              colorFrom="from-green-400"
+              colorTo="to-teal-400"
+            />
+
+            <StatCard
+              theme={theme}
+              currentTheme={currentTheme}
+              label="Achievements"
+              value={achievementsUnlocked}
+              colorFrom="from-amber-400"
+              colorTo="to-orange-400"
+            />
+          </div>
+        </div>
+
+        {/* GLOBAL RANKINGS SECTION */}
+        <div
+          className={`backdrop-blur-xl ${currentTheme.card} border ${currentTheme.cardBorder} rounded-3xl p-8 shadow-lg`}
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div
+                className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                  theme === 'dark'
+                    ? 'bg-gradient-to-br from-amber-600 to-orange-700'
+                    : 'bg-gradient-to-br from-amber-500 to-orange-600'
+                }`}
+              >
+                <TrendingUp className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className={`text-2xl font-bold ${currentTheme.text}`}>
+                  Global Rankings
+                </h3>
+                <p className={`${currentTheme.textMuted} text-sm`}>
+                  {topPlayers.length > 0 ? 'Top 3 crypto masters worldwide' : 'Be the first to appear on the leaderboard!'}
+                </p>
+              </div>
+            </div>
+            {topPlayers.length > 0 && (
+              <button
+                onClick={() => navigate('/leaderboard')}
+                className={`px-6 py-3 rounded-xl font-bold transition-all shadow-lg ${
+                  theme === 'dark'
+                    ? 'bg-gradient-to-r from-amber-600 to-orange-700 text-white hover:from-amber-500 hover:to-orange-600'
+                    : 'bg-gradient-to-r from-amber-500 to-orange-600 text-white hover:from-amber-400 hover:to-orange-500'
+                }`}
+              >
+                View Full Leaderboard →
+              </button>
+            )}
+          </div>
+
+          {topPlayers.length > 0 ? (
+            <div className="space-y-3">
+              {topPlayers.map((player, index) => {
+                const isCurrentUser = player.id === user?.id;
+                return (
+                  <div
+                    key={player.id}
+                    className={`flex items-center justify-between p-4 rounded-xl transition-all ${
+                      isCurrentUser
+                        ? theme === 'dark'
+                          ? 'bg-cyan-500/20 border-2 border-cyan-500/40'
+                          : 'bg-cyan-100 border-2 border-cyan-300'
+                        : theme === 'dark'
+                        ? 'bg-slate-800/40 hover:bg-slate-800/60'
+                        : 'bg-slate-100 hover:bg-slate-200'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-4">
+                      {/* Rank Icon */}
+                      <div className="w-12 text-center">
+                        {index === 0 && <Crown className="w-8 h-8 text-amber-400 mx-auto" />}
+                        {index === 1 && <Trophy className="w-7 h-7 text-slate-400 mx-auto" />}
+                        {index === 2 && <Award className="w-7 h-7 text-amber-600 mx-auto" />}
+                        {index > 2 && (
+                          <span className={`text-2xl font-bold ${currentTheme.textMuted}`}>
+                            #{index + 1}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Avatar */}
+                      <div
+                        className={`w-14 h-14 rounded-full flex items-center justify-center font-bold text-lg ${
+                          theme === 'dark' ? 'bg-slate-700' : 'bg-slate-200'
+                        } ${currentTheme.text}`}
+                      >
+                        {player.avatar || player.name.charAt(0).toUpperCase()}
+                      </div>
+
+                      {/* Player Info */}
+                      <div>
+                        <h4 className={`text-lg font-bold ${currentTheme.text}`}>
+                          {player.name}
+                          {isCurrentUser && (
+                            <span className="ml-2 text-sm text-cyan-400">(You)</span>
+                          )}
+                        </h4>
+                        <p className={`text-sm ${currentTheme.textMuted}`}>
+                          Level {player.level} • {player.missionsCompleted} missions completed
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Points */}
+                    <div className="text-right">
+                      <div className="flex items-center space-x-2">
+                        <Trophy
+                          className={`w-5 h-5 ${
+                            theme === 'dark' ? 'text-amber-400' : 'text-amber-600'
+                          }`}
+                        />
+                        <span
+                          className={`text-2xl font-black ${
+                            theme === 'dark' ? 'text-amber-400' : 'text-amber-600'
+                          }`}
+                        >
+                          {player.points}
+                        </span>
+                      </div>
+                      <p className={`text-xs ${currentTheme.textMuted} mt-1`}>points</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className={`w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center ${
+                theme === 'dark' ? 'bg-slate-800' : 'bg-slate-100'
+              }`}>
+                <Trophy className={`w-10 h-10 ${currentTheme.textMuted}`} />
+              </div>
+              <h4 className={`text-lg font-bold ${currentTheme.text} mb-2`}>
+                No Rankings Yet
+              </h4>
+              <p className={`${currentTheme.textMuted} text-sm max-w-md mx-auto`}>
+                Complete missions and earn points to be the first on the leaderboard!
+              </p>
+              <button
+                onClick={() => navigate('/missions')}
+                className={`mt-4 px-6 py-3 rounded-xl font-bold transition-all ${
+                  theme === 'dark'
+                    ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                    : 'bg-purple-500 hover:bg-purple-600 text-white'
+                }`}
+              >
+                Start Missions →
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

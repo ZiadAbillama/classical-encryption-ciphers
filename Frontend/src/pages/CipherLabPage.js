@@ -596,16 +596,20 @@ const newStats = {
               plain2: affineCrackT
             });
 
+            let crackedResult = '';
             if (r.preview) {
+              crackedResult = r.preview;
               setOutputText(r.preview);
               showNotification(`Cracked! a=${r.guessedA}, b=${r.guessedB}`, 'success');
             } else if (Array.isArray(r.candidates) && r.candidates[0]) {
               const top = r.candidates[0];
+              crackedResult = top.preview;
               setOutputText(top.preview);
               showNotification(`Cracked (top guess): a=${top.a}, b=${top.b}`, 'success');
             } else {
               setOutputText('');
               showNotification('No crack candidates returned.', 'error');
+              return;
             }
 
             setLastProcessed(currentInput);
@@ -618,6 +622,107 @@ const newStats = {
             // Award extra points for cracking with file upload
             const crackPoints = uploadedFile ? 65 : 50;
             await awardPoints(crackPoints, 'Code Cracked', crackedStats || user?.stats || stats);
+
+            // Auto-download file if one was uploaded
+            if (uploadedFile && fileName && crackedResult) {
+              const baseFileName = fileName.substring(0, fileName.lastIndexOf('.'));
+              const suffix = 'cracked';
+
+              try {
+                if (fileType === '.txt') {
+                  const processedFileName = `${baseFileName}_${suffix}.txt`;
+                  const blob = new Blob([crackedResult], { type: 'text/plain;charset=utf-8' });
+                  downloadBlob(blob, processedFileName);
+                } 
+                else if (fileType === '.docx' || fileType === '.doc') {
+                  const processedFileName = `${baseFileName}_${suffix}.docx`;
+                  const doc = new Document({
+                    sections: [{
+                      properties: {},
+                      children: crackedResult.split('\n').map(line => 
+                        new Paragraph({
+                          children: [new TextRun(line)]
+                        })
+                      )
+                    }]
+                  });
+                  
+                  const blob = await Packer.toBlob(doc);
+                  downloadBlob(blob, processedFileName);
+                }
+                else if (fileType === '.pdf') {
+                  const processedFileName = `${baseFileName}_${suffix}.pdf`;
+                  const pdfDoc = await PDFDocument.create();
+                  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+                  
+                  const lines = crackedResult.split('\n');
+                  const fontSize = 12;
+                  const lineHeight = fontSize * 1.2;
+                  const margin = 50;
+                  const pageWidth = 595.28;
+                  const pageHeight = 841.89;
+                  const maxWidth = pageWidth - 2 * margin;
+                  
+                  let page = pdfDoc.addPage([pageWidth, pageHeight]);
+                  let yPosition = pageHeight - margin;
+                  
+                  for (const line of lines) {
+                    const words = line.split(' ');
+                    let currentLine = '';
+                    
+                    for (const word of words) {
+                      const testLine = currentLine + (currentLine ? ' ' : '') + word;
+                      const textWidth = font.widthOfTextAtSize(testLine, fontSize);
+                      
+                      if (textWidth > maxWidth && currentLine) {
+                        page.drawText(currentLine, {
+                          x: margin,
+                          y: yPosition,
+                          size: fontSize,
+                          font: font,
+                          color: rgb(0, 0, 0)
+                        });
+                        yPosition -= lineHeight;
+                        currentLine = word;
+                        
+                        if (yPosition < margin) {
+                          page = pdfDoc.addPage([pageWidth, pageHeight]);
+                          yPosition = pageHeight - margin;
+                        }
+                      } else {
+                        currentLine = testLine;
+                      }
+                    }
+                    
+                    if (currentLine) {
+                      page.drawText(currentLine, {
+                        x: margin,
+                        y: yPosition,
+                        size: fontSize,
+                        font: font,
+                        color: rgb(0, 0, 0)
+                      });
+                      yPosition -= lineHeight;
+                    }
+                    
+                    if (yPosition < margin) {
+                      page = pdfDoc.addPage([pageWidth, pageHeight]);
+                      yPosition = pageHeight - margin;
+                    }
+                  }
+                  
+                  const pdfBytes = await pdfDoc.save();
+                  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                  downloadBlob(blob, processedFileName);
+                }
+                
+                showNotification(`✅ File downloaded: ${baseFileName}_${suffix}${fileType}`, 'success');
+              } catch (error) {
+                console.error('Error creating file:', error);
+                showNotification('❌ Error creating download file', 'error');
+              }
+            }
+
             return;
           }
 
