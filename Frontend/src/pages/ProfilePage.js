@@ -631,7 +631,7 @@ const [showNewPassword, setShowNewPassword] = useState(false);
                       theme === 'dark' ? 'text-emerald-400' : 'text-emerald-600'
                     }`}
                   >
-                    {((1 - rankData.userRank / rankData.totalUsers) * 100).toFixed(1)}%
+                    {(((rankData.totalUsers - rankData.userRank) / (rankData.totalUsers - 1)) * 100).toFixed(1)}%
                   </div>
                 </div>
               </div>
