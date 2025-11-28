@@ -15,6 +15,24 @@ function requireAuth(req, res, next) {
   }
 }
 
+// Helper function to calculate achievements
+function calculateAchievements(stats) {
+  if (!stats) return 0;
+  
+  const totalEncryptions = stats.totalEncryptions || 0;
+  const totalDecryptions = stats.totalDecryptions || 0;
+  const bestCombo = stats.bestCombo || 0;
+  const level = stats.level || 1;
+  
+  let count = 0;
+  if (totalEncryptions + totalDecryptions > 0) count++;
+  if (bestCombo >= 5) count++;
+  if (totalEncryptions >= 5 && totalDecryptions >= 5) count++;
+  if (level >= 5) count++;
+  
+  return count;
+}
+
 /* -------------------------------------------
    GET /api/users/me  ← MISSING ROUTE (THE FIX)
 --------------------------------------------*/
@@ -184,23 +202,5 @@ router.get('/leaderboard/rank/:userId', async (req, res) => {
     res.status(500).json({ error: "Failed to load rank" });
   }
 });
-
-// Helper function to calculate achievements
-function calculateAchievements(stats) {
-  if (!stats) return 0;
-  
-  const totalEncryptions = stats.totalEncryptions || 0;
-  const totalDecryptions = stats.totalDecryptions || 0;
-  const bestCombo = stats.bestCombo || 0;
-  const level = stats.level || 1;
-  
-  let count = 0;
-  if (totalEncryptions + totalDecryptions > 0) count++;
-  if (bestCombo >= 5) count++;
-  if (totalEncryptions >= 5 && totalDecryptions >= 5) count++;
-  if (level >= 5) count++;
-  
-  return count;
-}
 
 export default router;
