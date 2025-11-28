@@ -173,9 +173,23 @@ router.get('/leaderboard/rank/:userId', async (req, res) => {
     const userRank = userIndex + 1;
     const totalUsers = users.length;
 
-    // Get users around this player (5 above, 5 below)
-    const start = Math.max(0, userIndex - 5);
-    const end = Math.min(users.length, userIndex + 6);
+    // Get 3 players total: user + closest neighbors
+    let start, end;
+    
+    if (userIndex === 0) {
+      // If rank 1, show: you, rank 2, rank 3
+      start = 0;
+      end = Math.min(3, users.length);
+    } else if (userIndex === users.length - 1) {
+      // If last rank, show: rank n-2, rank n-1, you
+      start = Math.max(0, users.length - 3);
+      end = users.length;
+    } else {
+      // Middle ranks: show 1 above, you, 1 below
+      start = userIndex - 1;
+      end = userIndex + 2;
+    }
+    
     const nearbyUsers = users.slice(start, end);
 
     const nearby = nearbyUsers.map((user, idx) => ({
