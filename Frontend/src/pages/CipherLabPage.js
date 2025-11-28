@@ -572,7 +572,7 @@ const newStats = {
 
   // Duplicate Prevention - SKIP for affine crack mode
   const currentInput = `${selectedCipher}-${mode}-${inputText.trim().toUpperCase()}-${
-    selectedCipher === 'affine' ? `${affineA}-${affineB}-${showCrack}` :
+    selectedCipher === 'affine' ? (showCrack ? "AFFINE-CRACK" : `${affineA}-${affineB}`) :
     selectedCipher === 'mono' ? monoKey :
     selectedCipher === 'vigenere' ? vigenereKey :
     selectedCipher === 'playfair' ? playfairKey :
