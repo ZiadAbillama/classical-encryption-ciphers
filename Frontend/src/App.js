@@ -17,6 +17,7 @@ import CipherInfoPage from "./pages/CipherInfoPage";
 import MissionsPage from "./pages/MissionsPage";
 import MissionAttemptPage from "./pages/MissionAttemptPage";
 import ProfilePage from "./pages/ProfilePage";
+import LeaderboardPage from "./pages/LeaderboardPage";
 import OAuthCallbackPage from "./pages/OAuthCallbackPage";
 
 // Protected Route Component using useAuth
@@ -75,6 +76,10 @@ function App() {
             <Route
               path="/profile"
               element={<ProtectedRoute element={<ProfilePage />} />}
+            />
+            <Route
+              path="/leaderboard"
+              element={<ProtectedRoute element={<LeaderboardPage />} />}
             />
 
             {/* Fallback: go home (will redirect to login if not authed) */}

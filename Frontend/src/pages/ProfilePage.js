@@ -14,6 +14,8 @@ import {
   CheckCircle2,
   Eye,
   EyeOff,
+  TrendingUp,
+  Users,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -74,6 +76,7 @@ const [passwords, setPasswords] = useState({
   confirm: '',
 });
 const [busy, setBusy] = useState(false);
+const [rankData, setRankData] = useState(null);
 
 // App-level notifications and delete-account modal
 const [notification, setNotification] = useState(null);
@@ -133,9 +136,24 @@ const [showNewPassword, setShowNewPassword] = useState(false);
         setEditName(data.user.name || "");
         setEditEmail(data.user.email || "");
 
+        // Fetch leaderboard rank
+        fetchLeaderboardRank(data.user.id);
+
       } catch (err) {
         console.error("Profile refresh failed:", err);
         showError("Could not refresh profile");
+      }
+    };
+
+    const fetchLeaderboardRank = async (userId) => {
+      try {
+        const res = await fetch(`${API_BASE}/api/users/leaderboard/rank/${userId}`);
+        const data = await res.json();
+        if (res.ok) {
+          setRankData(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch rank:", err);
       }
     };
 
@@ -535,6 +553,165 @@ const [showNewPassword, setShowNewPassword] = useState(false);
             </div>
           </div>
         </div>
+
+        {/* Leaderboard Rank Section */}
+        {rankData && (
+          <div className="mb-10">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className={`text-xl font-bold ${currentTheme.text}`}>Global Ranking</h3>
+              <button
+                onClick={() => navigate('/leaderboard')}
+                className={`px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 transition-all ${
+                  theme === 'dark'
+                    ? 'bg-gradient-to-r from-cyan-600 to-indigo-600 text-white hover:from-cyan-500 hover:to-indigo-500'
+                    : 'bg-gradient-to-r from-cyan-500 to-indigo-500 text-white hover:from-cyan-400 hover:to-indigo-400'
+                }`}
+              >
+                <TrendingUp className="w-4 h-4" />
+                View Full Leaderboard
+              </button>
+            </div>
+
+            {/* Your Rank Card */}
+            <div
+              className={`mb-4 rounded-2xl border-2 ${currentTheme.cardBorder} ${currentTheme.card} backdrop-blur-xl p-6 ${
+                rankData.userRank <= 10
+                  ? theme === 'dark'
+                    ? 'bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-amber-500/40'
+                    : 'bg-gradient-to-br from-amber-50 to-orange-50 border-amber-300'
+                  : ''
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div
+                    className={`w-16 h-16 rounded-2xl flex items-center justify-center ${
+                      rankData.userRank === 1
+                        ? 'bg-gradient-to-br from-amber-400 to-yellow-500'
+                        : rankData.userRank === 2
+                        ? 'bg-gradient-to-br from-slate-300 to-slate-400'
+                        : rankData.userRank === 3
+                        ? 'bg-gradient-to-br from-amber-500 to-orange-500'
+                        : theme === 'dark'
+                        ? 'bg-slate-800'
+                        : 'bg-slate-200'
+                    }`}
+                  >
+                    {rankData.userRank === 1 && <Crown className="w-8 h-8 text-white" />}
+                    {rankData.userRank === 2 && <Trophy className="w-8 h-8 text-white" />}
+                    {rankData.userRank === 3 && <Award className="w-8 h-8 text-white" />}
+                    {rankData.userRank > 3 && (
+                      <span className={`text-2xl font-black ${currentTheme.text}`}>
+                        #{rankData.userRank}
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <div className={`${currentTheme.textMuted} text-xs uppercase tracking-wide mb-1`}>
+                      Your Global Rank
+                    </div>
+                    <div className={`text-3xl font-black ${currentTheme.text}`}>
+                      #{rankData.userRank}
+                      <span className="text-base font-normal ml-2">/ {rankData.totalUsers}</span>
+                    </div>
+                    {rankData.userRank <= 10 && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <Star className="w-4 h-4 text-amber-400" />
+                        <span className="text-xs font-semibold text-amber-400">Top 10 Player!</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className={`${currentTheme.textMuted} text-xs uppercase tracking-wide mb-1`}>
+                    Percentile
+                  </div>
+                  <div
+                    className={`text-2xl font-black ${
+                      theme === 'dark' ? 'text-emerald-400' : 'text-emerald-600'
+                    }`}
+                  >
+                    {((1 - rankData.userRank / rankData.totalUsers) * 100).toFixed(1)}%
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Nearby Players */}
+            {rankData.nearby && rankData.nearby.length > 0 && (
+              <div
+                className={`rounded-2xl border ${currentTheme.cardBorder} ${currentTheme.card} backdrop-blur-xl p-4`}
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <Users className={`w-4 h-4 ${currentTheme.textMuted}`} />
+                  <h4 className={`text-sm font-semibold ${currentTheme.textMuted} uppercase tracking-wide`}>
+                    Nearby Players
+                  </h4>
+                </div>
+                <div className="space-y-2">
+                  {rankData.nearby.map((player) => (
+                    <div
+                      key={player.id}
+                      className={`flex items-center justify-between p-3 rounded-xl transition-all ${
+                        player.isCurrentUser
+                          ? theme === 'dark'
+                            ? 'bg-cyan-500/20 border-2 border-cyan-500/40'
+                            : 'bg-cyan-100 border-2 border-cyan-300'
+                          : theme === 'dark'
+                          ? 'bg-slate-800/40 hover:bg-slate-800/60'
+                          : 'bg-slate-100 hover:bg-slate-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-8 text-center font-bold ${
+                            player.isCurrentUser ? 'text-cyan-400' : currentTheme.textMuted
+                          }`}
+                        >
+                          #{player.rank}
+                        </div>
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
+                            theme === 'dark' ? 'bg-slate-700' : 'bg-slate-200'
+                          } ${currentTheme.text}`}
+                        >
+                          {player.avatar || player.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <div className={`font-semibold ${currentTheme.text}`}>
+                            {player.name}
+                            {player.isCurrentUser && (
+                              <span className="ml-2 text-xs text-cyan-400">(You)</span>
+                            )}
+                          </div>
+                          <div className={`text-xs ${currentTheme.textMuted}`}>
+                            Level {player.level} • {player.missionsCompleted} missions
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="flex items-center gap-1">
+                          <Trophy
+                            className={`w-4 h-4 ${
+                              theme === 'dark' ? 'text-amber-400' : 'text-amber-600'
+                            }`}
+                          />
+                          <span
+                            className={`font-bold ${
+                              theme === 'dark' ? 'text-amber-400' : 'text-amber-600'
+                            }`}
+                          >
+                            {player.points}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-3 mb-10">
