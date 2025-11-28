@@ -560,68 +560,68 @@ const newStats = {
 
   // Main Process Handler
   const handleProcess = async () => {
-    if (!selectedCipher) return;
+  if (!selectedCipher) return;
 
-    // Validation: Require file upload or text input
-    if (selectedCipher !== 'euclid') {
-      if (!uploadedFile && !inputText.trim()) {
-        showNotification('⚠️ Please upload a file or enter text to process!', 'error');
-        return;
-      }
-    }
-
-    // Duplicate Prevention
-    const currentInput = `${selectedCipher}-${mode}-${inputText.trim().toUpperCase()}-${
-      selectedCipher === 'affine' ? `${affineA}-${affineB}-${showCrack}` :
-      selectedCipher === 'mono' ? monoKey :
-      selectedCipher === 'vigenere' ? vigenereKey :
-      selectedCipher === 'playfair' ? playfairKey :
-      selectedCipher === 'hill' ? JSON.stringify(hillMatrix) : ''
-    }`;
-
-    if (currentInput === lastProcessed && selectedCipher !== 'euclid') {
-      showNotification('⚠️ Enter different text to earn more points!', 'error');
+  // Validation: Require file upload or text input
+  if (selectedCipher !== 'euclid') {
+    if (!uploadedFile && !inputText.trim()) {
+      showNotification('⚠️ Please upload a file or enter text to process!', 'error');
       return;
     }
+  }
 
-    try {
-      let result = '';
+  // Duplicate Prevention - SKIP for affine crack mode
+  const currentInput = `${selectedCipher}-${mode}-${inputText.trim().toUpperCase()}-${
+    selectedCipher === 'affine' ? `${affineA}-${affineB}-${showCrack}` :
+    selectedCipher === 'mono' ? monoKey :
+    selectedCipher === 'vigenere' ? vigenereKey :
+    selectedCipher === 'playfair' ? playfairKey :
+    selectedCipher === 'hill' ? JSON.stringify(hillMatrix) : ''
+  }`;
 
-      switch (selectedCipher) {
-        case 'affine': {
-          if (showCrack) {
-            const r = await postJSON("/api/affine/crack", {
-              text: inputText,
-              plain1: affineCrackE,
-              plain2: affineCrackT
-            });
+  // ✅ Only check for duplicates if NOT in affine crack mode
+  if (currentInput === lastProcessed && selectedCipher !== 'euclid' && !(selectedCipher === 'affine' && showCrack)) {
+    showNotification('⚠️ Enter different text to earn more points!', 'error');
+    return;
+  }
 
-            let crackedResult = '';
-            if (r.preview) {
-              crackedResult = r.preview;
-              setOutputText(r.preview);
-              showNotification(`Cracked! a=${r.guessedA}, b=${r.guessedB}`, 'success');
-            } else if (Array.isArray(r.candidates) && r.candidates[0]) {
-              const top = r.candidates[0];
-              crackedResult = top.preview;
-              setOutputText(top.preview);
-              showNotification(`Cracked (top guess): a=${top.a}, b=${top.b}`, 'success');
-            } else {
-              setOutputText('');
-              showNotification('No crack candidates returned.', 'error');
-              return;
-            }
+  try {
+    let result = '';
 
-            setLastProcessed(currentInput);
-            await incrementActionStats('affine');
-            const crackedStats = await saveStatsToBackend(user, {
-              ...(user?.stats || stats),
-              totalEncryptions: (user?.stats?.totalEncryptions || 0),
-              totalDecryptions: (user?.stats?.totalDecryptions || 0),
-            });
-            // Award extra points for cracking with file upload
-            const crackPoints = uploadedFile ? 65 : 50;
-            await awardPoints(crackPoints, 'Code Cracked', crackedStats || user?.stats || stats);
+    switch (selectedCipher) {
+      case 'affine': {
+        if (showCrack) {
+          const r = await postJSON("/api/affine/crack", {
+            text: inputText,
+            plain1: affineCrackE,
+            plain2: affineCrackT
+          });
+
+          let crackedResult = '';
+          if (r.preview) {
+            crackedResult = r.preview;
+            setOutputText(r.preview);
+            showNotification(`Cracked! a=${r.guessedA}, b=${r.guessedB}`, 'success');
+          } else if (Array.isArray(r.candidates) && r.candidates[0]) {
+            const top = r.candidates[0];
+            crackedResult = top.preview;
+            setOutputText(top.preview);
+            showNotification(`Cracked (top guess): a=${top.a}, b=${top.b}`, 'success');
+          } else {
+            setOutputText('');
+            showNotification('No crack candidates returned.', 'error');
+            return;
+          }
+
+          await incrementActionStats('affine');
+          const crackedStats = await saveStatsToBackend(user, {
+            ...(user?.stats || stats),
+            totalEncryptions: (user?.stats?.totalEncryptions || 0),
+            totalDecryptions: (user?.stats?.totalDecryptions || 0),
+          });
+          // Award extra points for cracking with file upload
+          const crackPoints = uploadedFile ? 65 : 50;
+          await awardPoints(crackPoints, 'Code Cracked', crackedStats || user?.stats || stats);
 
             // Auto-download file if one was uploaded
             if (uploadedFile && fileName && crackedResult) {
