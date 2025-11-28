@@ -1,4 +1,6 @@
-// AFFINE CIPHER
+// ===============================
+// AFFINE CIPHER (FULL FIXED VERSION)
+// ===============================
 
 // constants
 const A = 26;
@@ -8,7 +10,8 @@ const mod = (x, m = A) => ((x % m) + m) % m;
 
 // gcd + extended gcd (standard)
 function gcd(a, b) {
-  a = Math.abs(a); b = Math.abs(b);
+  a = Math.abs(a); 
+  b = Math.abs(b);
   while (b !== 0) {
     const t = a % b;
     a = b;
@@ -16,11 +19,13 @@ function gcd(a, b) {
   }
   return a;
 }
+
 function egcd(a, b) {
   if (b === 0) return { g: a, x: 1, y: 0 };
   const { g, x: x1, y: y1 } = egcd(b, a % b);
   return { g, x: y1, y: x1 - Math.floor(a / b) * y1 };
 }
+
 function modInv(a, m = A) {
   a = mod(a, m);
   const { g, x } = egcd(a, m);
@@ -28,9 +33,14 @@ function modInv(a, m = A) {
   return mod(x, m);
 }
 
-// encrypt / decrypt
+// ===============================
+// ENCRYPT
+// ===============================
+
 export function affineEncrypt(text, a, b) {
-  if (gcd(a, A) !== 1) throw new Error(`Invalid 'a' (${a}) — gcd(a,26) !== 1`);
+  if (gcd(a, A) !== 1) 
+    throw new Error(`Invalid 'a' (${a}) — gcd(a,26) !== 1`);
+
   return [...text].map((ch) => {
     if (!isLetter(ch)) return ch;
     const base = baseOf(ch);
@@ -40,8 +50,12 @@ export function affineEncrypt(text, a, b) {
   }).join("");
 }
 
+// ===============================
+// DECRYPT
+// ===============================
+
 export function affineDecrypt(text, a, b) {
-  const aInv = modInv(a, A); // will throw if invalid
+  const aInv = modInv(a, A); 
   return [...text].map((ch) => {
     if (!isLetter(ch)) return ch;
     const base = baseOf(ch);
@@ -51,83 +65,52 @@ export function affineDecrypt(text, a, b) {
   }).join("");
 }
 
-// robust cracking: try top pairs and fallback to brute-force candidates
-export function affineCrack(ciphertext, plain1 = "E", plain2 = "T", topK = 4) {
-  const counts = new Map();
-  for (const ch of ciphertext.toUpperCase()) {
-    if (ch >= "A" && ch <= "Z") counts.set(ch, (counts.get(ch) || 0) + 1);
-  }
-  const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([ch]) => ch);
-  if (top.length < 1) throw new Error("No letters to analyze.");
-  
-  // helper to get 0..25 index
-  const toIndex = (ch) => ch.toUpperCase().charCodeAt(0) - 65;
-  
-  const p1 = toIndex(plain1);  // E = 4
-  const p2 = toIndex(plain2);  // T = 19
-  
+// ===============================
+// UNIVERSAL PERFECT AFFINE CRACKER
+// brute-force + english scoring
+// ===============================
+
+export function affineCrack(ciphertext) {
   const candidates = [];
-  const limit = Math.min(topK, top.length);
-  
-  // try pairings among topK most frequent ciphertext letters
-  for (let i = 0; i < limit; i++) {
-    for (let j = 0; j < limit; j++) {
-      if (i === j) continue;
+  const validA = [];
+
+  // valid 'a' values (coprime with 26)
+  for (let x = 1; x < 26; x++)
+    if (gcd(x, 26) === 1) validA.push(x);
+
+  // english scoring reference
+  const commonWords = [
+    "THE","AND","ING","ION","ENT","FOR","ARE","YOU",
+    "HAVE","THAT","HER","WAS","ONE","ALL","NOT","BUT",
+    "THIS","FROM","WITH","THEY","YOUR","BE","AS","AT"
+  ];
+
+  const scoreEnglish = (txt) => {
+    const up = txt.toUpperCase();
+    let score = 0;
+
+    for (const w of commonWords)
+      if (up.includes(w)) score += w.length * 2;
+
+    score += (txt.match(/ /g) || []).length;
+
+    return score;
+  };
+
+  // brute-force all combinations
+  for (const a of validA) {
+    for (let b = 0; b < 26; b++) {
       try {
-        const c1 = toIndex(top[i]);
-        const c2 = toIndex(top[j]);
-        
-        // Solve the system:
-        // c1 = a*p1 + b (mod 26)
-        // c2 = a*p2 + b (mod 26)
-        // Subtract: c1 - c2 = a*(p1 - p2) (mod 26)
-        
-        const deltaC = mod(c1 - c2);
-        const deltaP = mod(p1 - p2);
-        
-        // Check if deltaP is invertible
-        if (gcd(deltaP, A) !== 1) continue;
-        
-        const a = mod(deltaC * modInv(deltaP, A));
-        
-        // Verify 'a' is valid
-        if (gcd(a, A) !== 1) continue;
-        
-        // Solve for b: b = c1 - a*p1 (mod 26)
-        const b = mod(c1 - a * p1);
-        
         const preview = affineDecrypt(ciphertext, a, b);
-        candidates.push({ a, b, preview, score: 0 });
-      } catch (e) {
-        // skip pair if inversion failed
-      }
+        const score = scoreEnglish(preview);
+
+        candidates.push({ a, b, preview, score });
+      } catch (_) {}
     }
   }
-  
-  // fallback brute-force (all valid a values) if no good candidate found
-  if (candidates.length === 0) {
-    const validA = [];
-    for (let aa = 1; aa < A; aa++) if (gcd(aa, A) === 1) validA.push(aa);
-    for (const aa of validA) {
-      for (let bb = 0; bb < A; bb++) {
-        try {
-          const preview = affineDecrypt(ciphertext, aa, bb);
-          candidates.push({ a: aa, b: bb, preview, score: 0 });
-        } catch (e) { /* skip */ }
-      }
-    }
-  }
-  
-  // Score candidates by counting common English words/patterns
-  const commonWords = ['THE', 'AND', 'FOR', 'ARE', 'BUT', 'NOT', 'YOU', 'ALL', 'CAN', 'HER', 'WAS', 'ONE'];
-  for (const cand of candidates) {
-    const upper = cand.preview.toUpperCase();
-    cand.score = commonWords.reduce((sum, word) => sum + (upper.includes(word) ? word.length : 0), 0);
-  }
-  
-  // Sort by score (higher = better)
-  candidates.sort((a, b) => b.score - a.score);
-  
-  // return top N candidates for inspection
+
+  // best-first
+  candidates.sort((x, y) => y.score - x.score);
+
   return { candidates: candidates.slice(0, 10) };
 }
