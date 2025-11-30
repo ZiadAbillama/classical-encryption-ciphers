@@ -63,7 +63,7 @@ const MissionAttemptPage = () => {
     "vigenere_encrypt": {
       cipher: "vigenere",
       title: "Keyword Master",
-      description: "Encrypt 'CRYPTO' with keyword 'KEY'",
+      description: "Encrypt using Vigenère cipher 'CRYPTO' with keyword 'KEY'",
       plaintext: "CRYPTO",
       key: "KEY",
       target: "MVWZXM",
@@ -99,7 +99,7 @@ const MissionAttemptPage = () => {
     "vigenere_decrypt": {
   cipher: "vigenere",
   title: "Key Finder",
-  description: "Decrypt 'JSOPQ' with keyword 'CODE'",
+  description: "Decrypt using Vigenère cipher 'JSOPQ' with keyword 'CODE'",
   ciphertext: "JSOPQ",
   key: "CODE",
   target: "HELLO",
